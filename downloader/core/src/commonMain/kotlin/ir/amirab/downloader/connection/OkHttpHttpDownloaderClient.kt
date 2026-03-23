@@ -191,10 +191,15 @@ class OkHttpHttpDownloaderClient(
     }
 
     private fun createFileInfo(response: Response): HttpResponseInfo {
+        // Get the original URL from X-Original-URL header (set by Cloudflare Worker proxy)
+        // or fall back to the actual request URL
+        val originalUrl = response.request.header("X-Original-URL")
+            ?: response.request.url.toString()
+
         return HttpResponseInfo(
             statusCode = response.code,
             message = response.message,
-            requestUrl = response.request.url.toString(),
+            requestUrl = originalUrl,
             requestHeaders = response.request.headers.associate { (key, value) ->
                 key.lowercase() to value
             },

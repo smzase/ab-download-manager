@@ -257,7 +257,29 @@ async function proxyRequest(originalRequest, targetUrl) {
     }
 
     // 创建响应头
-    const responseHeaders = new Headers(response.headers);
+    const responseHeaders = new Headers();
+
+    // 复制原始响应头（保留所有原始头信息，包括 Content-Disposition）
+    const preserveHeaders = [
+      'content-disposition',
+      'content-type',
+      'content-length',
+      'last-modified',
+      'etag',
+      'accept-ranges',
+      'content-range',
+      'cache-control',
+      'expires',
+      'date'
+    ];
+
+    for (const [key, value] of response.headers) {
+      // 保留所有原始头，但排除一些 Worker 相关的头
+      if (!key.toLowerCase().startsWith('cf-') &&
+          !key.toLowerCase().startsWith('x-worker-')) {
+        responseHeaders.set(key, value);
+      }
+    }
 
     // 添加 CORS 头
     responseHeaders.set('Access-Control-Allow-Origin', '*');
