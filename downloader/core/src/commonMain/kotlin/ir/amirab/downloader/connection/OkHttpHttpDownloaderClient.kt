@@ -16,6 +16,7 @@ class OkHttpHttpDownloaderClient(
     private val proxyStrategyProvider: ProxyStrategyProvider,
     private val systemProxySelectorProvider: SystemProxySelectorProvider,
     private val autoConfigurableProxyProvider: AutoConfigurableProxyProvider,
+    private val cfWorkerSettingsProvider: CfWorkerSettingsProvider? = null,
 ) : HttpDownloaderClient() {
     private fun newCall(
         downloadCredentials: IHttpBasedDownloadCredentials,
@@ -26,26 +27,36 @@ class OkHttpHttpDownloaderClient(
         val rangeHeader = start?.let {
             createRangeHeader(start, end)
         }
+        val cfSettings = cfWorkerSettingsProvider?.getCfWorkerSettings()
+        val useCfWorker = cfSettings != null && cfSettings.enabled && 
+                          cfSettings.url.isNotBlank() && cfSettings.secretKey.isNotBlank()
+        
+        val actualUrl = if (useCfWorker) {
+            cfSettings!!.url
+        } else {
+            downloadCredentials.link
+        }
+        
         return okHttpClient
             .applyProxy(downloadCredentials)
             .newCall(
                 Request.Builder()
-                    .url(downloadCredentials.link)
+                    .url(actualUrl)
                     .apply {
+                        if (useCfWorker) {
+                            header("X-Original-Url", downloadCredentials.link)
+                            header("X-Secret-Key", cfSettings!!.secretKey)
+                        }
                         defaultHeadersInFirst().forEach { (k, v) ->
                             header(k, v)
                         }
-                        // we don't to add something that we sure that it will be overridden later
                         if (downloadCredentials.userAgent == null) {
-                            // only add default user agent if we don't specify it
                             val customUserAgent = customUserAgentProvider.getUserAgent()
                                 ?: getDefaultUserAgent()
                             header("User-Agent", customUserAgent)
                         }
                         downloadCredentials.headers
                             ?.filter {
-                                //OkHttp handles this header and if we override it,
-                                //makes redirected links to have this "Host" instead of their own!, and cause error
                                 !it.key.equals("Host", true)
                             }
                             ?.forEach { (k, v) ->

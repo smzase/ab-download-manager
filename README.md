@@ -28,9 +28,40 @@
 - 🌐 Browser Extensions
 - 💻 Multiplatform (Android / Windows / Linux / Mac)
 - 🌙 Multiple Themes (Dark/Light/Black and more) with modern UI
+- ☁️ Cloudflare Worker Proxy Support
 - ❤️ Free and Open Source
 
 Please visit [Project Website](https://abdownloadmanager.com) for more info.
+
+## Cloudflare Worker Proxy / Cloudflare Worker 代理
+
+This app supports using Cloudflare Worker as a download proxy to bypass network restrictions.
+
+本应用支持使用 Cloudflare Worker 作为下载代理，绕过网络限制。
+
+### What is this for? / 功能说明
+
+- Bypass download restrictions from certain ISPs or networks / 绕过某些 ISP 或网络的下载限制
+- Access content that might be blocked in your region / 访问可能在您所在地区被屏蔽的内容
+- Add an extra layer of privacy to your downloads / 为您的下载增加额外的隐私保护
+
+### Setup Instructions / 设置说明
+
+1. **Create a Cloudflare Worker / 创建 Cloudflare Worker**
+   - Go to [Cloudflare Workers](https://workers.cloudflare.com/) / 访问 [Cloudflare Workers](https://workers.cloudflare.com/)
+   - Create a new Worker / 创建一个新的 Worker
+   - Copy the code from `cloudflare-worker/worker.js` in this repository / 复制本仓库中 `cloudflare-worker/worker.js` 的代码
+   - **Important**: Change the `SECRET_KEY` to a strong random string / **重要**：将 `SECRET_KEY` 更改为强随机字符串
+   - Deploy and note your Worker URL / 部署并记录您的 Worker URL
+
+2. **Configure the App / 配置应用**
+   - Open Settings → Download Engine / 打开设置 → 下载引擎
+   - Find "Cloudflare Worker Proxy" / 找到 "Cloudflare Worker 代理"
+   - Enable it and enter your Worker URL and secret key / 启用它并输入您的 Worker URL 和密钥
+
+For detailed instructions, see [cloudflare-worker/README.md](cloudflare-worker/README.md).
+
+详细说明请参阅 [cloudflare-worker/README.md](cloudflare-worker/README.md)。
 
 ## Installation
 

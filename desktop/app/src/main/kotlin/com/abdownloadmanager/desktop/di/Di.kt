@@ -194,8 +194,12 @@ val downloaderModule = module {
     single<UserAgentProvider> {
         UserAgentProviderFromSettings(get())
     }
+    single {
+        CfWorkerSettingsProviderFromSettings(get())
+    }
     single<HttpDownloaderClient> {
         OkHttpHttpDownloaderClient(
+            get(),
             get(),
             get(),
             get(),

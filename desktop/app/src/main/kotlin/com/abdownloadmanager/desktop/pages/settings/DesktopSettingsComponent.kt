@@ -147,6 +147,7 @@ class DesktopSettingsComponent(
                     ConfigurableGroup(
                         nestedConfigurable = listOf(
                             CommonSettings.proxyConfig(proxyManager),
+                            CommonSettings.cfWorkerConfig(appSettings, scope),
                             CommonSettings.userAgent(appSettings),
                             CommonSettings.ignoreSSLCertificates(appSettings),
                             CommonSettings.useServerLastModified(appRepository),

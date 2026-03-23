@@ -5,6 +5,8 @@ import com.abdownloadmanager.shared.pagemanager.PerHostSettingsPageManager
 import com.abdownloadmanager.shared.repository.BaseAppRepository
 import com.abdownloadmanager.shared.storage.BaseAppSettingsStorage
 import com.abdownloadmanager.shared.ui.configurable.item.BooleanConfigurable
+import com.abdownloadmanager.shared.ui.configurable.item.CfWorkerConfigurable
+import com.abdownloadmanager.shared.ui.configurable.item.CfWorkerSettings
 import com.abdownloadmanager.shared.ui.configurable.item.EnumConfigurable
 import com.abdownloadmanager.shared.ui.configurable.item.FolderConfigurable
 import com.abdownloadmanager.shared.ui.configurable.item.IntConfigurable
@@ -34,6 +36,9 @@ import ir.amirab.util.flow.createMutableStateFlowFromStateFlow
 import ir.amirab.util.flow.mapStateFlow
 import ir.amirab.util.osfileutil.FileUtils
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import kotlin.math.roundToInt
 
 object CommonSettings {
@@ -651,6 +656,37 @@ object CommonSettings {
                             )
                     }
                 }
+            }
+        )
+    }
+
+    fun cfWorkerConfig(appSettingsStorage: BaseAppSettingsStorage, scope: CoroutineScope): CfWorkerConfigurable {
+        val settings = MutableStateFlow(
+            CfWorkerSettings(
+                enabled = appSettingsStorage.cfWorkerEnabled.value,
+                url = appSettingsStorage.cfWorkerUrl.value,
+                secretKey = appSettingsStorage.cfWorkerSecretKey.value,
+            )
+        )
+        settings.onEach { newSettings ->
+            appSettingsStorage.cfWorkerEnabled.value = newSettings.enabled
+            appSettingsStorage.cfWorkerUrl.value = newSettings.url
+            appSettingsStorage.cfWorkerSecretKey.value = newSettings.secretKey
+        }.launchIn(scope)
+        return CfWorkerConfigurable(
+            title = Res.string.settings_cf_worker.asStringSource(),
+            description = Res.string.settings_cf_worker_description.asStringSource(),
+            backedBy = settings,
+            describe = {
+                if (it.enabled) {
+                    Res.string.settings_cf_worker_describe_enabled.asStringSource()
+                } else {
+                    Res.string.settings_cf_worker_describe_disabled.asStringSource()
+                }
+            },
+            validate = {
+                if (!it.enabled) true
+                else it.url.isNotBlank() && it.secretKey.isNotBlank()
             }
         )
     }
