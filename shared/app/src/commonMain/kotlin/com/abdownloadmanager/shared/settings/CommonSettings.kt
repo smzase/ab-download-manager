@@ -650,10 +650,6 @@ object CommonSettings {
                                 )
                             )
                     }
-
-                    ProxyMode.CloudflareWorker -> {
-                        Res.string.proxy_cloudflare_worker.asStringSource()
-                    }
                 }
             }
         )

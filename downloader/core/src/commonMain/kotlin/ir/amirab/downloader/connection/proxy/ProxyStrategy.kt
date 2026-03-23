@@ -5,5 +5,4 @@ sealed interface ProxyStrategy {
     data object UseSystem : ProxyStrategy
     data class ManualProxy(val proxy: Proxy) : ProxyStrategy
     data class ByScript(val scriptPath: String) : ProxyStrategy
-    data class CloudflareWorker(val domain: String, val key: String) : ProxyStrategy
 }

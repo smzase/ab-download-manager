@@ -10,10 +10,13 @@ permissions:
 
 jobs:
   create-packages:
-    runs-on: windows-2022
+    strategy:
+      matrix:
+        os: [ "ubuntu-latest", "ubuntu-24.04-arm", "windows-2022", "windows-11-arm", "macos-15-intel", "macos-15" ]
+    runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v3
 
       - name: Set up JBR
         uses: actions/setup-java@v4
@@ -25,35 +28,55 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
-
       - name: Cache Gradle Dependencies
         uses: actions/cache@v4
         with:
           path: |
-            C:/Users/runneradmin/.gradle/caches
-            C:/Users/runneradmin/.gradle/wrapper
-          key: windows-2022-gradle
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ matrix.os }}-gradle
           enableCrossOsArchive: true
+
+      - name: Skip Android build (build android only on Ubuntu)
+        if: matrix.os != 'ubuntu-latest'
+        shell: "bash"
+        run: |
+          echo "SKIP_ANDROID_BUILD=true" >> $GITHUB_ENV
+
+      - name: Use Android Secrets
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          echo "ABDM_KEYSTORE_FILE=${{ secrets.ABDM_KEYSTORE_FILE }}" >> $GITHUB_ENV
+          echo "ABDM_KEYSTORE_FILE_PASSWORD=${{ secrets.ABDM_KEYSTORE_FILE_PASSWORD }}" >> $GITHUB_ENV
+          echo "ABDM_KEYSTORE_KEY_ALIAS=${{ secrets.ABDM_KEYSTORE_KEY_ALIAS }}" >> $GITHUB_ENV
+          echo "ABDM_KEYSTORE_KEY_PASSWORD=${{ secrets.ABDM_KEYSTORE_KEY_PASSWORD }}" >> $GITHUB_ENV
+
+      # Steps specific to macOS (to create DMG for macOS)
+      - name: Install create-dmg (for macOS)
+        if: startsWith(matrix.os, 'macos-')
+        run: |
+          brew install create-dmg
 
       - name: Gradle
         run: |
-          ./gradlew.bat
+          ./gradlew
+        shell: "bash"
 
-      - name: Build desktop package
+      - name: Build package for current OS using gradle
+        shell: bash
         run: |
-          ./gradlew.bat :desktop:app:createBinariesForCi
+          ./gradlew createReleaseFolderForCi
 
       - name: Release Gradle to unlock cache files
+        shell: bash
         run: |
-          ./gradlew.bat --stop
+          ./gradlew -stop
 
       - name: Upload output to artifacts
         uses: actions/upload-artifact@v4
         with:
           path: ./build/ci-release
-          name: app-windows
+          name: app-${{ matrix.os }}
 
   release:
     runs-on: "ubuntu-latest"

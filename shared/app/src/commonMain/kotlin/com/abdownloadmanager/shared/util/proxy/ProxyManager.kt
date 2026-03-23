@@ -43,14 +43,6 @@ class ProxyManager(
                     ProxyStrategy.Direct
                 }
             }
-            ProxyMode.CloudflareWorker -> {
-                val config = usingProxy.cloudflareWorker
-                if (config.isValid()) {
-                    ProxyStrategy.CloudflareWorker(config.domain, config.key)
-                } else {
-                    ProxyStrategy.Direct
-                }
-            }
         }
     }
 

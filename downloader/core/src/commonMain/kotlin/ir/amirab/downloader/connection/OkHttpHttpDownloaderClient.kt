@@ -10,11 +10,6 @@ import java.net.InetSocketAddress
 import java.net.Proxy
 import java.net.ProxySelector
 
-data class CloudflareWorkerConfig(
-    val domain: String,
-    val key: String,
-)
-
 class OkHttpHttpDownloaderClient(
     private val okHttpClient: OkHttpClient,
     private val customUserAgentProvider: UserAgentProvider,
@@ -22,9 +17,6 @@ class OkHttpHttpDownloaderClient(
     private val systemProxySelectorProvider: SystemProxySelectorProvider,
     private val autoConfigurableProxyProvider: AutoConfigurableProxyProvider,
 ) : HttpDownloaderClient() {
-
-    private var currentCloudflareWorkerConfig: CloudflareWorkerConfig? = null
-
     private fun newCall(
         downloadCredentials: IHttpBasedDownloadCredentials,
         start: Long?,
@@ -34,18 +26,11 @@ class OkHttpHttpDownloaderClient(
         val rangeHeader = start?.let {
             createRangeHeader(start, end)
         }
-        val proxyStrategy = proxyStrategyProvider.getProxyStrategyFor(downloadCredentials.link)
-        val (finalUrl, cfKey) = if (proxyStrategy is ProxyStrategy.CloudflareWorker) {
-            currentCloudflareWorkerConfig = CloudflareWorkerConfig(proxyStrategy.domain, proxyStrategy.key)
-            buildCloudflareWorkerUrl(downloadCredentials.link, proxyStrategy.domain) to proxyStrategy.key
-        } else {
-            downloadCredentials.link to null
-        }
         return okHttpClient
             .applyProxy(downloadCredentials)
             .newCall(
                 Request.Builder()
-                    .url(finalUrl)
+                    .url(downloadCredentials.link)
                     .apply {
                         defaultHeadersInFirst().forEach { (k, v) ->
                             header(k, v)
@@ -76,9 +61,6 @@ class OkHttpHttpDownloaderClient(
                         }
                         downloadCredentials.userAgent?.let { userAgent ->
                             header("User-Agent", userAgent)
-                        }
-                        cfKey?.let { key ->
-                            header("CF-Authorization", key)
                         }
                     }
                     .apply(extraBuilder)
@@ -146,17 +128,7 @@ class OkHttpHttpDownloaderClient(
                         }
                     }.build()
             }
-
-            is ProxyStrategy.CloudflareWorker -> return this
         }
-    }
-
-    private fun buildCloudflareWorkerUrl(
-        originalLink: String,
-        domain: String,
-    ): String {
-        val encodedUrl = java.net.URLEncoder.encode(originalLink, "UTF-8")
-        return "https://$domain/?url=$encodedUrl"
     }
 
 
