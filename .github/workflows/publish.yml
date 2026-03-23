@@ -25,6 +25,9 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
       - name: Cache Gradle Dependencies
         uses: actions/cache@v4
         with:
@@ -34,16 +37,13 @@ jobs:
           key: windows-2022-gradle
           enableCrossOsArchive: true
 
-      - name: Skip Android build
-        run: echo "SKIP_ANDROID_BUILD=true" >> $GITHUB_ENV
-
       - name: Gradle
         run: |
           ./gradlew.bat
 
-      - name: Build package for current OS using gradle
+      - name: Build desktop package
         run: |
-          ./gradlew.bat createReleaseFolderForCi
+          ./gradlew.bat :desktop:app:createBinariesForCi
 
       - name: Release Gradle to unlock cache files
         run: |
