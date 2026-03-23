@@ -23,6 +23,8 @@ import com.arkivanov.decompose.ComponentContext
 import ir.amirab.downloader.DownloadManager
 import ir.amirab.downloader.DownloadManagerEvents
 import ir.amirab.downloader.downloaditem.DownloadJobStatus
+import ir.amirab.downloader.downloaditem.contexts.RemovedBy
+import ir.amirab.downloader.downloaditem.contexts.User
 import ir.amirab.downloader.monitor.CompletedDownloadItemState
 import ir.amirab.downloader.monitor.DurationBasedProcessingDownloadItemState
 import ir.amirab.downloader.monitor.IDownloadItemState
@@ -278,7 +280,12 @@ abstract class BaseSingleDownloadComponent<
         applicationScope.launch {
             val state = itemStateFlow.value as? ProcessingDownloadItemState
             if (deletePartialFileOnDownloadCancellation.value) {
-                downloadSystem.reset(downloadId)
+                // Remove download and delete the partial file
+                downloadSystem.removeDownload(
+                    id = downloadId,
+                    alsoRemoveFile = true,
+                    context = RemovedBy(User)
+                )
             } else {
                 if (state?.canBePaused() ?: false) {
                     downloadSystem.manualPause(downloadId)

@@ -45,7 +45,7 @@ data class AppSettingsModel(
     override val browserIntegrationEnabled: Boolean = true,
     override val browserIntegrationPort: Int = 15151,
     override val trackDeletedFilesOnDisk: Boolean = false,
-    override val deletePartialFileOnDownloadCancellation: Boolean = false,
+    override val deletePartialFileOnDownloadCancellation: Boolean = true,
     override val sizeUnit: SupportedSizeUnits = SupportedSizeUnits.BinaryBytes,
     override val speedUnit: SupportedSizeUnits = SupportedSizeUnits.BinaryBytes,
     override val ignoreSSLCertificates: Boolean = false,

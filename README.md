@@ -1,181 +1,194 @@
 <div align="center">
   <a href="https://abdownloadmanager.com" target="_blank">
-    <img width="180" src="assets/logo/app_logo_with_background.svg" alt="AB Download Manager Logo">
+    <img width="180" src="assets/logo/app_logo_with_background.svg" alt="AB Download Manager 图标">
   </a>
 </div>
-<h1 align="center">AB Download Manager</h1>
+<h1 align="center">AB 下载管理器</h1>
 <p align="center">
-    <a href="https://github.com/amir1376/ab-download-manager/releases/latest"><img alt="GitHub Release" src="https://img.shields.io/github/v/release/amir1376/ab-download-manager?color=greenlight&label=latest%20release"></a>
-    <a href="https://abdownloadmanager.com"><img alt="AB Download Manager Website" src="https://img.shields.io/badge/project-website-purple?&labelColor=gray"></a>
-    <a href="https://t.me/abdownloadmanager_discussion"><img alt="Telegram Group" src="https://img.shields.io/badge/Telegram-Group-blue?logo=telegram&labelColor=gray"></a>
-    <a href="https://t.me/abdownloadmanager"><img alt="Telegram Channel" src="https://img.shields.io/badge/Telegram-Channel-blue?logo=telegram&labelColor=gray"></a>
+    <a href="https://github.com/amir1376/ab-download-manager/releases/latest"><img alt="GitHub 发布版本" src="https://img.shields.io/github/v/release/amir1376/ab-download-manager?color=greenlight&label=%E6%9C%80%E6%96%B0%E5%8F%91%E5%B8%83"></a>
+    <a href="https://abdownloadmanager.com"><img alt="AB Download Manager 官网" src="https://img.shields.io/badge/%E9%A1%B9%E7%9B%AE-%E5%AE%98%E7%BD%91-purple?&labelColor=gray"></a>
+    <a href="https://t.me/abdownloadmanager_discussion"><img alt="Telegram 群组" src="https://img.shields.io/badge/Telegram-%E7%BE%A4%E7%BB%84-blue?logo=telegram&labelColor=gray"></a>
+    <a href="https://t.me/abdownloadmanager"><img alt="Telegram 频道" src="https://img.shields.io/badge/Telegram-%E9%A2%91%E9%81%93-blue?logo=telegram&labelColor=gray"></a>
     <a href="https://crowdin.com/project/ab-download-manager"><img alt="Crowdin" src="https://badges.crowdin.net/ab-download-manager/localized.svg"></a>
 </p>
 
 <a href="https://abdownloadmanager.com" target="_blank">
-    <img alt="AB Download Manager Banner" src="assets/banners/app_banner.png"/>
+    <img alt="AB Download Manager 横幅" src="assets/banners/app_banner.png"/>
 </a>
 
 
-## Description
+## 简介
 
-[AB Download Manager](https://abdownloadmanager.com) is a desktop app that helps you manage and organize your downloads more efficiently than ever before.
+[AB 下载管理器](https://abdownloadmanager.com) 是一款桌面应用程序，帮助您比以往更高效地管理和组织下载任务。
 
-## Features
+## 功能特性
 
-- ⚡️ Faster Download Speed
-- ⏰ Queues and Schedulers
-- 🌐 Browser Extensions
-- 💻 Multiplatform (Android / Windows / Linux / Mac)
-- 🌙 Multiple Themes (Dark/Light/Black and more) with modern UI
-- ❤️ Free and Open Source
+- ⚡️ 更快的下载速度
+- ⏰ 下载队列和计划任务
+- 🌐 浏览器扩展插件
+- 💻 多平台支持（Android / Windows / Linux / Mac）
+- 🌙 多种主题（深色/浅色/黑色等），现代化界面
+- ☁️ Cloudflare Worker 中转支持（绕过网络限制）
+- ❤️ 免费开源
 
-Please visit [Project Website](https://abdownloadmanager.com) for more info.
+请访问[项目官网](https://abdownloadmanager.com)了解更多信息。
 
-## Installation
+## 安装指南
 
-### Download and Install the App
+### 下载并安装应用
 
-<a href="https://abdownloadmanager.com"><img src="https://img.shields.io/badge/Official%20Website-897BFF?logo=abdownloadmanager&logoColor=fff&style=flat-square" alt="Official Website" height="32" /></a>
-<a href="https://github.com/amir1376/ab-download-manager/releases/latest"><img src="https://img.shields.io/badge/GitHub%20Releases-2a2f36?logo=github&logoColor=fff&style=flat-square" alt="GitHub Releases" height="32" /></a>
+<a href="https://abdownloadmanager.com"><img src="https://img.shields.io/badge/%E5%AE%98%E6%96%B9%E7%BD%91%E7%AB%99-897BFF?logo=abdownloadmanager&logoColor=fff&style=flat-square" alt="官方网站" height="32" /></a>
+<a href="https://github.com/amir1376/ab-download-manager/releases/latest"><img src="https://img.shields.io/badge/GitHub%20%E5%8F%91%E5%B8%83-2a2f36?logo=github&logoColor=fff&style=flat-square" alt="GitHub 发布" height="32" /></a>
 
-#### Installation script (Linux)
+#### Linux 安装脚本
 
 ```bash
 bash <(curl -fsSL https://raw.githubusercontent.com/amir1376/ab-download-manager/master/scripts/install.sh)
 ```
 
-#### Winget or Scoop (for Windows)
+#### Windows 安装（Winget 或 Scoop）
 
-**winget**:
+**winget**：
 
 ```bash
 winget install amir1376.ABDownloadManager
 ```
 
-**scoop**:
+**scoop**：
 
 ```bash
 scoop install extras/abdownloadmanager
 ```
 
-#### Homebrew (for macOS & Linux)
+#### macOS 和 Linux 安装（Homebrew）
 
 ```bash
 brew tap amir1376/tap && brew install --cask ab-download-manager
 ```
 
-> ⚠️ **Warning:** This software is NOT on Google Play or other app stores unless listed here. Any version **claiming to be or related to this project** should be considered SCAM and UNSAFE.
+> ⚠️ **警告：** 本软件不在 Google Play 或其他应用商店上架，除非在此列出的渠道。任何**声称与本项目相关**的版本都应被视为**诈骗和不安全**。
 
-For alternative installation methods, uninstallation instructions, and more details, please refer to the [wiki](https://github.com/amir1376/ab-download-manager/wiki/) page.
+有关其他安装方法、卸载说明和更多详细信息，请参阅 [wiki](https://github.com/amir1376/ab-download-manager/wiki/) 页面。
 
-### Browser Extensions
+### 浏览器扩展
 
-You can download the browser extension to integrate the app with your browser.
+您可以下载浏览器扩展来将应用与浏览器集成。
 
 <p align="left">
 <a href="https://addons.mozilla.org/firefox/addon/ab-download-manager/">
     <picture>
-        <img alt="Chrome Extension" src="./assets/banners/firefox-extension.png" height="48">
+        <img alt="Chrome 扩展" src="./assets/banners/firefox-extension.png" height="48">
     </picture>
 </a>
 <a href="https://chromewebstore.google.com/detail/bbobopahenonfdgjgaleledndnnfhooj">
     <picture>
         <source media="(prefers-color-scheme: dark)" srcset="./assets/banners/chrome-extension_dark.png" height="48">
         <source media="(prefers-color-scheme: light)" srcset="./assets/banners/chrome-extension_light.png" height="48">
-        <img alt="Chrome Extension" src="./assets/banners/chrome-extension_light.png" height="48">
+        <img alt="Chrome 扩展" src="./assets/banners/chrome-extension_light.png" height="48">
     </picture>
 </a>
 </p>
 
-## Screenshots
+## 截图
 
 <div align="center">
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="./assets/screenshots/app-home_dark.png">
   <source media="(prefers-color-scheme: light)" srcset="./assets/screenshots/app-home_light.png">
-  <img alt="App Home Section" src="./assets/screenshots/app-home_dark.png">
+  <img alt="应用主页" src="./assets/screenshots/app-home_dark.png">
 </picture>
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="./assets/screenshots/app-download_dark.png">
   <source media="(prefers-color-scheme: light)" srcset="./assets/screenshots/app-download_light.png">
-  <img alt="App Download Section" src="./assets/screenshots/app-download_dark.png">
+  <img alt="应用下载页面" src="./assets/screenshots/app-download_dark.png">
 </picture>
 </div>
 
-## Project Status & Feedback
+## Cloudflare Worker 中转功能
 
-Please keep in mind that this project is in the beginning of its journey.
-**Lots of features** are on the way!
+AB 下载管理器现在支持通过 Cloudflare Worker 中转下载，这可以：
 
-**But**, in the meantime you may face **Bugs or Problems**. If you do, please report them to me via the [Community chat](#community) or through `GitHub Issues`, and I'll do my best to fix them ASAP.
+- 🚀 绕过某些网络限制
+- 🔒 隐藏真实下载源
+- 🌍 提高在某些地区的下载稳定性
 
-## Community
+### 使用方法
 
-You can join our [Telegram Group](https://t.me/abdownloadmanager_discussion) to:
+1. 在 Cloudflare 上部署 Worker 脚本（位于项目根目录的 `cloudflare-worker.js`）
+2. 在 AB 下载管理器的**设置 → 下载引擎 → 使用代理**中选择 **Cloudflare Worker**
+3. 输入您的 Worker URL 和可选的 API Token
 
-- Report problems
-- Suggest features
-- Get help with the app
+详细配置说明请参考 [cloudflare-worker.js](cloudflare-worker.js) 文件中的注释。
 
-## Repositories And Source Code
+## 项目状态与反馈
 
-There are multiple repositories related to the **AB Download Manager** project:
+请注意，本项目正处于起步阶段，**许多功能**正在开发中！
 
-| Repository                                                                                 | Description                                                                   |
+**但是**，在此期间您可能会遇到**错误或问题**。如果遇到，请通过[社区聊天](#社区)或 `GitHub Issues` 向我报告，我会尽快修复。
+
+## 社区
+
+您可以加入我们的 [Telegram 群组](https://t.me/abdownloadmanager_discussion) 来：
+
+- 报告问题
+- 建议新功能
+- 获取使用帮助
+
+## 相关仓库和源代码
+
+AB 下载管理器项目包含多个相关仓库：
+
+| 仓库                                                                                       | 描述                                                                          |
 |--------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------|
-| [Main Application](https://github.com/amir1376/ab-download-manager) (You are here)         | Contains the  **Application** that runs on your  **device**                   |
-| [Browser Integration](https://github.com/amir1376/ab-download-manager-browser-integration) | Contains the **Browser Extension** to be installed on your  **browser**       |
-| [Website](https://github.com/amir1376/ab-download-manager-website)                         | Contains the **AB Download Manager** [website](https://abdownloadmanager.com) |
+| [主应用](https://github.com/amir1376/ab-download-manager)（您在这里）                       | 运行在您**设备**上的**应用程序**                                              |
+| [浏览器集成](https://github.com/amir1376/ab-download-manager-browser-integration)           | 安装在您**浏览器**上的**浏览器扩展**                                          |
+| [网站](https://github.com/amir1376/ab-download-manager-website)                             | **AB 下载管理器**[官网](https://abdownloadmanager.com) 的源代码               |
 
-I've spent a lot of time to create this project.
+我花费了大量时间创建这个项目。
 
-If you like my work, please consider giving it a ⭐ — thanks! ❤️
+如果您喜欢我的工作，请考虑给它一个 ⭐ — 谢谢！❤️
 
-## Bug Report
+## 错误报告
 
-If you notice any bugs in the source code, please report them via the `GitHub Issues` section.
+如果您在源代码中发现任何错误，请通过 `GitHub Issues` 部分报告。
 
-## Build From Source
+## 从源代码构建
 
-To compile and test the desktop app on your local machine,
-follow these steps:
+要在本地机器上编译和测试桌面应用程序，请按照以下步骤操作：
 
-1. Clone the project.
-2. Download and extract the [JBR](https://github.com/JetBrains/JetBrainsRuntime/releases), and make it available by either:
+1. 克隆项目。
+2. 下载并解压 [JBR](https://github.com/JetBrains/JetBrainsRuntime/releases)，并通过以下方式之一使其可用：
     
-    - Adding it to your `PATH`, or
-    - Setting the `JAVA_HOME` environment variable to its installation path.
+    - 将其添加到您的 `PATH`，或
+    - 将 `JAVA_HOME` 环境变量设置为其安装路径。
   
-3. Navigate to the project directory, open your terminal and execute the following command:
+3. 导航到项目目录，打开终端并执行以下命令：
 
     ```bash
     ./gradlew createReleaseFolderForCi
     ```
 
-4. The output will be available at:
+4. 输出将位于：
 
     ```
-    <project_dir>/build/ci-release
+    <项目目录>/build/ci-release
     ```
 
-> **Note**. This project is compiled and published by GitHub actions [here](./.github/workflows/publish.yml), so if you
-> faced any problem you can check that too.
+> **注意**。本项目由 GitHub Actions 编译和发布，配置文件在[这里](./.github/workflows/publish.yml)，所以如果您遇到任何问题，也可以参考该文件。
 
-## Translations
+## 翻译
 
-If you’d like to help translate AB Download Manager into another language, or improve existing translations, you can do
-so on Crowdin. Here’s how:
+如果您想帮助将 AB 下载管理器翻译成其他语言，或改进现有翻译，可以在 Crowdin 上进行。方法如下：
 
-- Visit the project in [Crowdin](https://crowdin.com/project/ab-download-manager)
-- Please DO NOT submit translations via pull requests.
-- If you want to add a new language, please see [this](https://github.com/amir1376/ab-download-manager/issues/144).
+- 在 [Crowdin](https://crowdin.com/project/ab-download-manager) 上访问该项目
+- 请**不要**通过 Pull Request 提交翻译
+- 如果您想添加新语言，请参阅[此说明](https://github.com/amir1376/ab-download-manager/issues/144)
 
-## Contribution
+## 贡献
 
-If you want to contribute to this project, please read [Contributing Guide](CONTRIBUTING.md) first.
+如果您想为这个项目做出贡献，请先阅读[贡献指南](CONTRIBUTING.md)。
 
-## Support the Project
+## 支持项目
 
-If you'd like to support the project, you can find details on how to donate in the [DONATE.md](DONATE.md) file.
+如果您想支持这个项目，可以在 [DONATE.md](DONATE.md) 文件中找到捐赠详情。
