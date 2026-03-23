@@ -13,7 +13,10 @@ env:
 
 jobs:
   create-packages:
-    runs-on: windows-2022
+    strategy:
+      matrix:
+        os: [ "ubuntu-latest", "ubuntu-24.04-arm", "windows-2022", "windows-11-arm", "macos-15-intel", "macos-15" ]
+    runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -34,18 +37,33 @@ jobs:
           path: |
             ~/.gradle/caches
             ~/.gradle/wrapper
-          key: windows-2022-gradle
+          key: ${{ matrix.os }}-gradle
           enableCrossOsArchive: true
 
-      - name: Skip Android build
-        shell: bash
+      - name: Skip Android build (build android only on Ubuntu)
+        if: matrix.os != 'ubuntu-latest'
+        shell: "bash"
         run: |
           echo "SKIP_ANDROID_BUILD=true" >> $GITHUB_ENV
+
+      - name: Use Android Secrets
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          echo "ABDM_KEYSTORE_FILE=${{ secrets.ABDM_KEYSTORE_FILE }}" >> $GITHUB_ENV
+          echo "ABDM_KEYSTORE_FILE_PASSWORD=${{ secrets.ABDM_KEYSTORE_FILE_PASSWORD }}" >> $GITHUB_ENV
+          echo "ABDM_KEYSTORE_KEY_ALIAS=${{ secrets.ABDM_KEYSTORE_KEY_ALIAS }}" >> $GITHUB_ENV
+          echo "ABDM_KEYSTORE_KEY_PASSWORD=${{ secrets.ABDM_KEYSTORE_KEY_PASSWORD }}" >> $GITHUB_ENV
+
+      # Steps specific to macOS (to create DMG for macOS)
+      - name: Install create-dmg (for macOS)
+        if: startsWith(matrix.os, 'macos-')
+        run: |
+          brew install create-dmg
 
       - name: Gradle
         run: |
           ./gradlew
-        shell: bash
+        shell: "bash"
 
       - name: Build package for current OS using gradle
         shell: bash
@@ -61,7 +79,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           path: ./build/ci-release
-          name: app-windows
+          name: app-${{ matrix.os }}
 
   release:
     runs-on: "ubuntu-latest"
