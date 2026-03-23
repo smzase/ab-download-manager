@@ -8,9 +8,6 @@ on:
 permissions:
   contents: write
 
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-
 jobs:
   create-packages:
     runs-on: windows-2022
@@ -32,30 +29,25 @@ jobs:
         uses: actions/cache@v4
         with:
           path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
+            C:/Users/runneradmin/.gradle/caches
+            C:/Users/runneradmin/.gradle/wrapper
           key: windows-2022-gradle
           enableCrossOsArchive: true
 
       - name: Skip Android build
-        shell: bash
-        run: |
-          echo "SKIP_ANDROID_BUILD=true" >> $GITHUB_ENV
+        run: echo "SKIP_ANDROID_BUILD=true" >> $GITHUB_ENV
 
       - name: Gradle
         run: |
-          ./gradlew
-        shell: bash
+          ./gradlew.bat
 
       - name: Build package for current OS using gradle
-        shell: bash
         run: |
-          ./gradlew createReleaseFolderForCi
+          ./gradlew.bat createReleaseFolderForCi
 
       - name: Release Gradle to unlock cache files
-        shell: bash
         run: |
-          ./gradlew -stop
+          ./gradlew.bat --stop
 
       - name: Upload output to artifacts
         uses: actions/upload-artifact@v4
