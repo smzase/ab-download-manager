@@ -17,35 +17,35 @@
 </a>
 
 
-## Description
+## 简介
 
-[AB Download Manager](https://abdownloadmanager.com) is a desktop app that helps you manage and organize your downloads more efficiently than ever before.
+[AB Download Manager](https://abdownloadmanager.com) 是一款桌面应用程序，可以帮助您更高效地管理和组织下载任务。
 
-## Features
+## 功能特点
 
-- ⚡️ Faster Download Speed
-- ⏰ Queues and Schedulers
-- 🌐 Browser Extensions
-- 💻 Multiplatform (Android / Windows / Linux / Mac)
-- 🌙 Multiple Themes (Dark/Light/Black and more) with modern UI
-- ❤️ Free and Open Source
+- ⚡️ 更快的下载速度
+- ⏰ 下载队列和定时任务
+- 🌐 浏览器扩展集成
+- 💻 多平台支持（Android / Windows / Linux / Mac）
+- 🌙 多种主题（深色/浅色/纯黑等）以及现代化界面
+- ❤️ 免费且开源
 
-Please visit [Project Website](https://abdownloadmanager.com) for more info.
+更多功能请访问[项目官网](https://abdownloadmanager.com)。
 
-## Installation
+## 安装
 
-### Download and Install the App
+### 下载并安装应用
 
-<a href="https://abdownloadmanager.com"><img src="https://img.shields.io/badge/Official%20Website-897BFF?logo=abdownloadmanager&logoColor=fff&style=flat-square" alt="Official Website" height="32" /></a>
+<a href="https://abdownloadmanager.com"><img src="https://img.shields.io/badge/Official%20Website-897BFF?logo=abdownloadmanager&logoColor=fff&style=flat-square" alt="官方网站" height="32" /></a>
 <a href="https://github.com/amir1376/ab-download-manager/releases/latest"><img src="https://img.shields.io/badge/GitHub%20Releases-2a2f36?logo=github&logoColor=fff&style=flat-square" alt="GitHub Releases" height="32" /></a>
 
-#### Installation script (Linux)
+#### Linux 安装脚本
 
 ```bash
 bash <(curl -fsSL https://raw.githubusercontent.com/amir1376/ab-download-manager/master/scripts/install.sh)
 ```
 
-#### Winget or Scoop (for Windows)
+#### Winget 或 Scoop（Windows）
 
 **winget**:
 
@@ -59,19 +59,19 @@ winget install amir1376.ABDownloadManager
 scoop install extras/abdownloadmanager
 ```
 
-#### Homebrew (for macOS & Linux)
+#### Homebrew（macOS 和 Linux）
 
 ```bash
 brew tap amir1376/tap && brew install --cask ab-download-manager
 ```
 
-> ⚠️ **Warning:** This software is NOT on Google Play or other app stores unless listed here. Any version **claiming to be or related to this project** should be considered SCAM and UNSAFE.
+> ⚠️ **警告：** 本软件不在 Google Play 或其他应用商店上架，除非在此列出。任何**声称与此项目相关或隶属于本项目**的版本都应被视为**诈骗**，存在安全风险。
 
-For alternative installation methods, uninstallation instructions, and more details, please refer to the [wiki](https://github.com/amir1376/ab-download-manager/wiki/) page.
+有关其他安装方法、卸载说明及更多详情，请参阅 [wiki](https://github.com/amir1376/ab-download-manager/wiki/) 页面。
 
-### Browser Extensions
+### 浏览器扩展
 
-You can download the browser extension to integrate the app with your browser.
+您可以下载浏览器扩展来将应用与浏览器集成。
 
 <p align="left">
 <a href="https://addons.mozilla.org/firefox/addon/ab-download-manager/">
@@ -88,7 +88,36 @@ You can download the browser extension to integrate the app with your browser.
 </a>
 </p>
 
-## Screenshots
+## Cloudflare Worker 代理支持
+
+AB Download Manager 支持通过 Cloudflare Worker 作为代理进行下载，可以帮助您：
+
+- 绕过网络限制
+- 隐藏真实下载来源
+- 获得更稳定的下载速度
+
+### 工作原理
+
+```
+原下载链接 → Cloudflare Worker → 您的设备
+```
+
+### 部署 Cloudflare Worker
+
+1. 访问 [Cloudflare Workers](https://dash.cloudflare.com/workers)
+2. 创建新的 Worker
+3. 将 `cloudflare-worker-proxy.js` 文件的内容粘贴到 Worker 编辑器中
+4. 在 Worker 设置中配置环境变量 `AUTHORIZATION_KEY`（设置您的授权密钥）
+5. 部署 Worker
+
+### 在应用中配置
+
+1. 打开应用设置 → 下载引擎 → 代理
+2. 选择 "Cloudflare Worker"
+3. 填写您的 Worker 域名（例如：`my-worker.my-subdomain.workers.dev`）
+4. 填写您设置的授权密钥
+
+## 截图
 
 <div align="center">
 <picture>
@@ -104,78 +133,75 @@ You can download the browser extension to integrate the app with your browser.
 </picture>
 </div>
 
-## Project Status & Feedback
+## 项目状态与反馈
 
-Please keep in mind that this project is in the beginning of its journey.
-**Lots of features** are on the way!
+请注意，这个项目正处于发展初期。
+**更多功能**即将到来！
 
-**But**, in the meantime you may face **Bugs or Problems**. If you do, please report them to me via the [Community chat](#community) or through `GitHub Issues`, and I'll do my best to fix them ASAP.
+**但是**，在此期间您可能会遇到一些 **Bug 或问题**。如果遇到问题，请通过[社区聊天](#community)或 `GitHub Issues` 向我反馈，我会尽快解决。
 
-## Community
+## 社区
 
-You can join our [Telegram Group](https://t.me/abdownloadmanager_discussion) to:
+您可以加入我们的 [Telegram 群组](https://t.me/abdownloadmanager_discussion)：
 
-- Report problems
-- Suggest features
-- Get help with the app
+- 报告问题
+- 提出功能建议
+- 获取应用帮助
 
-## Repositories And Source Code
+## 代码仓库
 
-There are multiple repositories related to the **AB Download Manager** project:
+**AB Download Manager** 项目包含多个代码仓库：
 
-| Repository                                                                                 | Description                                                                   |
-|--------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------|
-| [Main Application](https://github.com/amir1376/ab-download-manager) (You are here)         | Contains the  **Application** that runs on your  **device**                   |
-| [Browser Integration](https://github.com/amir1376/ab-download-manager-browser-integration) | Contains the **Browser Extension** to be installed on your  **browser**       |
-| [Website](https://github.com/amir1376/ab-download-manager-website)                         | Contains the **AB Download Manager** [website](https://abdownloadmanager.com) |
+| 仓库                                                                                   | 描述                                           |
+|--------------------------------------------------------------------------------------|----------------------------------------------|
+| [主应用程序](https://github.com/amir1376/ab-download-manager)（您在这里）              | 包含在您的 **设备** 上运行的 **应用程序**         |
+| [浏览器集成](https://github.com/amir1376/ab-download-manager-browser-integration)    | 包含要安装在 **浏览器** 上的 **浏览器扩展**       |
+| [网站](https://github.com/amir1376/ab-download-manager-website)                      | 包含 **AB Download Manager** [官网](https://abdownloadmanager.com) |
 
-I've spent a lot of time to create this project.
+我为这个项目投入了大量时间和精力。
 
-If you like my work, please consider giving it a ⭐ — thanks! ❤️
+如果您喜欢我的工作，请考虑给我一个 ⭐ — 谢谢！❤️
 
-## Bug Report
+## 问题反馈
 
-If you notice any bugs in the source code, please report them via the `GitHub Issues` section.
+如果您在源代码中发现任何 bug，请通过 `GitHub Issues` 报告。
 
-## Build From Source
+## 从源码构建
 
-To compile and test the desktop app on your local machine,
-follow these steps:
+要在本地编译和测试桌面应用，请按以下步骤操作：
 
-1. Clone the project.
-2. Download and extract the [JBR](https://github.com/JetBrains/JetBrainsRuntime/releases), and make it available by either:
-    
-    - Adding it to your `PATH`, or
-    - Setting the `JAVA_HOME` environment variable to its installation path.
-  
-3. Navigate to the project directory, open your terminal and execute the following command:
+1. 克隆项目。
+2. 下载并解压 [JBR](https://github.com/JetBrains/JetBrainsRuntime/releases)，并通过以下方式使其可用：
+
+    - 将其添加到 `PATH`，或
+    - 将 `JAVA_HOME` 环境变量设置为其安装路径。
+
+3. 进入项目目录，打开终端并执行以下命令：
 
     ```bash
     ./gradlew createReleaseFolderForCi
     ```
 
-4. The output will be available at:
+4. 编译输出位于：
 
     ```
     <project_dir>/build/ci-release
     ```
 
-> **Note**. This project is compiled and published by GitHub actions [here](./.github/workflows/publish.yml), so if you
-> faced any problem you can check that too.
+> **注意**：本项目通过 GitHub Actions 进行编译和发布，详情请参阅[此处](./.github/workflows/publish.yml)。
 
-## Translations
+## 翻译
 
-If you’d like to help translate AB Download Manager into another language, or improve existing translations, you can do
-so on Crowdin. Here’s how:
+如果您想帮助将 AB Download Manager 翻译成其他语言，或改进现有翻译，可以通过以下方式进行：
 
-- Visit the project in [Crowdin](https://crowdin.com/project/ab-download-manager)
-- Please DO NOT submit translations via pull requests.
-- If you want to add a new language, please see [this](https://github.com/amir1376/ab-download-manager/issues/144).
+- 访问 [Crowdin](https://crowdin.com/project/ab-download-manager) 上的项目
+- 请**不要**通过拉取请求提交翻译
+- 如果您想添加新语言，请参阅[此 Issue](https://github.com/amir1376/ab-download-manager/issues/144)
 
-## Contribution
+## 贡献
 
-If you want to contribute to this project, please read [Contributing Guide](CONTRIBUTING.md) first.
+如果您想为本项目做出贡献，请先阅读[贡献指南](CONTRIBUTING.md)。
 
-## Support the Project
+## 支持项目
 
-If you'd like to support the project, you can find details on how to donate in the [DONATE.md](DONATE.md) file.
+如果您想支持这个项目，可以在 [DONATE.md](DONATE.md) 文件中找到捐款方式。
