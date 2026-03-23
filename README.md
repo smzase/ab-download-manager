@@ -28,36 +28,9 @@
 - 🌐 Browser Extensions
 - 💻 Multiplatform (Android / Windows / Linux / Mac)
 - 🌙 Multiple Themes (Dark/Light/Black and more) with modern UI
-- ☁️ Cloudflare Worker Proxy Support
 - ❤️ Free and Open Source
 
 Please visit [Project Website](https://abdownloadmanager.com) for more info.
-
-## Cloudflare Worker 代理
-
-本应用支持使用 Cloudflare Worker 作为下载代理，绕过网络限制。
-
-### 功能说明
-
-- 绕过某些 ISP 或网络的下载限制
-- 访问可能在您所在地区被屏蔽的内容
-- 为您的下载增加额外的隐私保护
-
-### 设置说明
-
-1. **创建 Cloudflare Worker**
-   - 访问 [Cloudflare Workers](https://workers.cloudflare.com/)
-   - 创建一个新的 Worker
-   - 复制本仓库中 `cloudflare-worker/worker.js` 的代码
-   - **重要**：将 `SECRET_KEY` 更改为强随机字符串
-   - 部署并记录您的 Worker URL
-
-2. **配置应用**
-   - 打开设置 → 下载引擎
-   - 找到 "Cloudflare Worker 代理"
-   - 启用它并输入您的 Worker URL 和密钥
-
-详细说明请参阅 [cloudflare-worker/README.md](cloudflare-worker/README.md)。
 
 ## Installation
 

@@ -43,6 +43,14 @@ class ProxyManager(
                     ProxyStrategy.Direct
                 }
             }
+            ProxyMode.CloudflareWorker -> {
+                val cfConfig = usingProxy.cloudflareWorker
+                if (cfConfig.workerUrl.isNotBlank()) {
+                    ProxyStrategy.CloudflareWorker(cfConfig.workerUrl, cfConfig.apiToken)
+                } else {
+                    ProxyStrategy.Direct
+                }
+            }
         }
     }
 

@@ -1,7 +1,6 @@
 package com.abdownloadmanager.shared.ui.configurable
 
 import com.abdownloadmanager.shared.ui.configurable.item.BooleanConfigurable
-import com.abdownloadmanager.shared.ui.configurable.item.CfWorkerConfigurable
 import com.abdownloadmanager.shared.ui.configurable.item.DayOfWeekConfigurable
 import com.abdownloadmanager.shared.ui.configurable.item.EnumConfigurable
 import com.abdownloadmanager.shared.ui.configurable.item.FileChecksumConfigurable
@@ -35,7 +34,6 @@ data class CommonConfigurableRenderers(
     val themeConfigurableRenderer: ConfigurableRenderer<ThemeConfigurable>,
     val timeConfigurableRenderer: ConfigurableRenderer<TimeConfigurable>,
     val proxyConfigurableRenderer: ConfigurableRenderer<ProxyConfigurable>,
-    val cfWorkerConfigurableRenderer: ConfigurableRenderer<CfWorkerConfigurable>,
 
     ) : ContainsConfigurableRenderers {
     override fun getAllRenderers(): Map<Configurable.Key, ConfigurableRenderer<*>> {
@@ -54,7 +52,6 @@ data class CommonConfigurableRenderers(
             ThemeConfigurable.Key to themeConfigurableRenderer,
             TimeConfigurable.Key to timeConfigurableRenderer,
             ProxyConfigurable.Key to proxyConfigurableRenderer,
-            CfWorkerConfigurable.Key to cfWorkerConfigurableRenderer,
         )
     }
 }

@@ -6,6 +6,7 @@ import ir.amirab.downloader.downloaditem.http.IHttpBasedDownloadCredentials
 import ir.amirab.downloader.downloaditem.http.IHttpDownloadCredentials
 import ir.amirab.downloader.utils.await
 import okhttp3.*
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import java.net.InetSocketAddress
 import java.net.Proxy
 import java.net.ProxySelector
@@ -16,7 +17,6 @@ class OkHttpHttpDownloaderClient(
     private val proxyStrategyProvider: ProxyStrategyProvider,
     private val systemProxySelectorProvider: SystemProxySelectorProvider,
     private val autoConfigurableProxyProvider: AutoConfigurableProxyProvider,
-    private val cfWorkerSettingsProvider: CfWorkerSettingsProvider? = null,
 ) : HttpDownloaderClient() {
     private fun newCall(
         downloadCredentials: IHttpBasedDownloadCredentials,
@@ -27,36 +27,26 @@ class OkHttpHttpDownloaderClient(
         val rangeHeader = start?.let {
             createRangeHeader(start, end)
         }
-        val cfSettings = cfWorkerSettingsProvider?.getCfWorkerSettings()
-        val useCfWorker = cfSettings != null && cfSettings.enabled && 
-                          cfSettings.url.isNotBlank() && cfSettings.secretKey.isNotBlank()
-        
-        val actualUrl = if (useCfWorker) {
-            cfSettings!!.url
-        } else {
-            downloadCredentials.link
-        }
-        
         return okHttpClient
             .applyProxy(downloadCredentials)
             .newCall(
                 Request.Builder()
-                    .url(actualUrl)
+                    .url(downloadCredentials.link)
                     .apply {
-                        if (useCfWorker) {
-                            header("X-Original-Url", downloadCredentials.link)
-                            header("X-Secret-Key", cfSettings!!.secretKey)
-                        }
                         defaultHeadersInFirst().forEach { (k, v) ->
                             header(k, v)
                         }
+                        // we don't to add something that we sure that it will be overridden later
                         if (downloadCredentials.userAgent == null) {
+                            // only add default user agent if we don't specify it
                             val customUserAgent = customUserAgentProvider.getUserAgent()
                                 ?: getDefaultUserAgent()
                             header("User-Agent", customUserAgent)
                         }
                         downloadCredentials.headers
                             ?.filter {
+                                //OkHttp handles this header and if we override it,
+                                //makes redirected links to have this "Host" instead of their own!, and cause error
                                 !it.key.equals("Host", true)
                             }
                             ?.forEach { (k, v) ->
@@ -138,6 +128,45 @@ class OkHttpHttpDownloaderClient(
                             it
                         }
                     }.build()
+            }
+
+            is ProxyStrategy.CloudflareWorker -> {
+                return newBuilder()
+                    .addInterceptor { chain ->
+                        val originalRequest = chain.request()
+                        val originalUrl = originalRequest.url.toString()
+
+                        // Build worker URL with target parameter
+                        val workerUrl = strategy.workerUrl
+                            .let {
+                                if (it.endsWith("/")) it else "$it/"
+                            }
+                            .let {
+                                it.toHttpUrlOrNull()
+                                    ?.newBuilder()
+                                    ?.addQueryParameter("target", originalUrl)
+                                    ?.build()
+                            }
+
+                        val newRequest = if (workerUrl != null) {
+                            originalRequest.newBuilder()
+                                .url(workerUrl)
+                                .apply {
+                                    // Add API token if provided
+                                    strategy.apiToken?.let { token ->
+                                        header("X-Worker-Token", token)
+                                    }
+                                    // Add original URL as header for reference
+                                    header("X-Original-URL", originalUrl)
+                                }
+                                .build()
+                        } else {
+                            originalRequest
+                        }
+
+                        chain.proceed(newRequest)
+                    }
+                    .build()
             }
         }
     }

@@ -36,9 +36,6 @@ interface IAppSettingsModel {
     val ignoreSSLCertificates: Boolean
     val useCategoryByDefault: Boolean
     val userAgent: String
-    val cfWorkerEnabled: Boolean
-    val cfWorkerUrl: String
-    val cfWorkerSecretKey: String
 }
 
 
@@ -76,7 +73,4 @@ interface BaseAppSettingsStorage :
     val ignoreSSLCertificates: MutableStateFlow<Boolean>
     val useCategoryByDefault: MutableStateFlow<Boolean>
     val userAgent: MutableStateFlow<String>
-    val cfWorkerEnabled: MutableStateFlow<Boolean>
-    val cfWorkerUrl: MutableStateFlow<String>
-    val cfWorkerSecretKey: MutableStateFlow<String>
 }

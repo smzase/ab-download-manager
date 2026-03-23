@@ -51,9 +51,6 @@ data class AppSettingsModel(
     override val ignoreSSLCertificates: Boolean = false,
     override val useCategoryByDefault: Boolean = true,
     override val userAgent: String = "",
-    override val cfWorkerEnabled: Boolean = false,
-    override val cfWorkerUrl: String = "",
-    override val cfWorkerSecretKey: String = "",
     val browserIconInLauncher: Boolean = false,
 ) : IAppSettingsModel {
     companion object {
@@ -96,9 +93,6 @@ data class AppSettingsModel(
             val ignoreSSLCertificates = booleanKeyOf("ignoreSSLCertificates")
             val useCategoryByDefault = booleanKeyOf("useCategoryByDefault")
             val userAgent = stringKeyOf("userAgent")
-            val cfWorkerEnabled = booleanKeyOf("cfWorkerEnabled")
-            val cfWorkerUrl = stringKeyOf("cfWorkerUrl")
-            val cfWorkerSecretKey = stringKeyOf("cfWorkerSecretKey")
             val browserIconInLauncher = booleanKeyOf("browserIconInLauncher")
         }
 
@@ -144,9 +138,6 @@ data class AppSettingsModel(
                 ignoreSSLCertificates = source.get(Keys.ignoreSSLCertificates) ?: default.ignoreSSLCertificates,
                 useCategoryByDefault = source.get(Keys.useCategoryByDefault) ?: default.useCategoryByDefault,
                 userAgent = source.get(Keys.userAgent) ?: default.userAgent,
-                cfWorkerEnabled = source.get(Keys.cfWorkerEnabled) ?: default.cfWorkerEnabled,
-                cfWorkerUrl = source.get(Keys.cfWorkerUrl) ?: default.cfWorkerUrl,
-                cfWorkerSecretKey = source.get(Keys.cfWorkerSecretKey) ?: default.cfWorkerSecretKey,
                 browserIconInLauncher = source.get(Keys.browserIconInLauncher) ?: default.browserIconInLauncher,
             )
         }
@@ -184,9 +175,6 @@ data class AppSettingsModel(
                 put(Keys.ignoreSSLCertificates, focus.ignoreSSLCertificates)
                 put(Keys.useCategoryByDefault, focus.useCategoryByDefault)
                 put(Keys.userAgent, focus.userAgent)
-                put(Keys.cfWorkerEnabled, focus.cfWorkerEnabled)
-                put(Keys.cfWorkerUrl, focus.cfWorkerUrl)
-                put(Keys.cfWorkerSecretKey, focus.cfWorkerSecretKey)
                 put(Keys.browserIconInLauncher, focus.browserIconInLauncher)
             }
         }
@@ -260,9 +248,6 @@ class AppSettingsStorage(
     override val ignoreSSLCertificates = from(AppSettingsModel.ignoreSSLCertificates)
     override val useCategoryByDefault = from(AppSettingsModel.useCategoryByDefault)
     override val userAgent = from(AppSettingsModel.userAgent)
-    override val cfWorkerEnabled = from(AppSettingsModel.cfWorkerEnabled)
-    override val cfWorkerUrl = from(AppSettingsModel.cfWorkerUrl)
-    override val cfWorkerSecretKey = from(AppSettingsModel.cfWorkerSecretKey)
 
     val browserIconInLauncher = from(AppSettingsModel.browserIconInLauncher)
 }

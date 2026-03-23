@@ -26,6 +26,19 @@ data class PACProxy(
     }
 }
 
+@Serializable
+data class CloudflareWorkerConfig(
+    val workerUrl: String,
+    val apiToken: String? = null,
+) {
+    companion object {
+        fun default() = CloudflareWorkerConfig(
+            workerUrl = "",
+            apiToken = null,
+        )
+    }
+}
+
 enum class ProxyMode {
     @SerialName("direct")
     Direct,
@@ -37,7 +50,10 @@ enum class ProxyMode {
     Manual,
 
     @SerialName("pac")
-    Pac;
+    Pac,
+
+    @SerialName("cloudflare_worker")
+    CloudflareWorker;
 
     companion object {
         fun usableValues(): List<ProxyMode> {
@@ -45,6 +61,7 @@ enum class ProxyMode {
                 listOf(
                     Direct,
                     Manual,
+                    CloudflareWorker,
                 )
             } else {
                 listOf(
@@ -52,6 +69,7 @@ enum class ProxyMode {
                     UseSystem,
                     Pac,
                     Manual,
+                    CloudflareWorker,
                 )
             }
         }
@@ -66,6 +84,8 @@ data class ProxyData(
     val proxyWithRules: ProxyWithRules,
     //configuration script config
     val pac: PACProxy,
+    //cloudflare worker config
+    val cloudflareWorker: CloudflareWorkerConfig,
 ) {
     companion object {
         fun default() = ProxyData(
@@ -74,7 +94,8 @@ data class ProxyData(
                 proxy = Proxy.default(),
                 rules = ProxyRules(emptyList())
             ),
-            pac = PACProxy.default()
+            pac = PACProxy.default(),
+            cloudflareWorker = CloudflareWorkerConfig.default()
         )
     }
 }

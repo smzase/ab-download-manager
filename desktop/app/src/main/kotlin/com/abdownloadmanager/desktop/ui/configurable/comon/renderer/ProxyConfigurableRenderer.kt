@@ -56,6 +56,7 @@ import com.abdownloadmanager.shared.ui.widget.MyTextField
 import com.abdownloadmanager.shared.ui.widget.RadioButton
 import com.abdownloadmanager.shared.ui.widget.Text
 import com.abdownloadmanager.shared.util.div
+import com.abdownloadmanager.shared.util.proxy.CloudflareWorkerConfig
 import com.abdownloadmanager.shared.util.proxy.ProxyData
 import com.abdownloadmanager.shared.util.proxy.ProxyMode
 import com.abdownloadmanager.shared.util.proxy.ProxyRules
@@ -122,6 +123,10 @@ object ProxyConfigurableRenderer : ConfigurableRenderer<ProxyConfigurable> {
 
         var excludeURLPatterns = mutableStateOf(proxyData.proxyWithRules.rules.excludeURLPatterns.joinToString(" "))
 
+        //cloudflare worker
+        var cfWorkerUrl = mutableStateOf(proxyData.cloudflareWorker.workerUrl)
+        var cfApiToken = mutableStateOf(proxyData.cloudflareWorker.apiToken.orEmpty())
+
         val canSave: Boolean by derivedStateOf {
             when (proxyMode.value) {
                 ProxyMode.Direct -> true
@@ -133,6 +138,10 @@ object ProxyConfigurableRenderer : ConfigurableRenderer<ProxyConfigurable> {
 
                 ProxyMode.Pac -> {
                     HttpUrlUtils.isValidUrl(pacURL.value)
+                }
+
+                ProxyMode.CloudflareWorker -> {
+                    HttpUrlUtils.isValidUrl(cfWorkerUrl.value)
                 }
             }
 
@@ -161,6 +170,10 @@ object ProxyConfigurableRenderer : ConfigurableRenderer<ProxyConfigurable> {
                                 .map { it.trim() }
                                 .filterNot { it.isEmpty() },
                         )
+                    ),
+                    cloudflareWorker = CloudflareWorkerConfig(
+                        workerUrl = cfWorkerUrl.value.trim(),
+                        apiToken = cfApiToken.value.takeIf { it.isNotEmpty() },
                     )
                 )
             )
@@ -299,6 +312,12 @@ object ProxyConfigurableRenderer : ConfigurableRenderer<ProxyConfigurable> {
                                         ProxyMode.Pac -> {
                                             Column(cm) {
                                                 RenderPACConfig(state)
+                                            }
+                                        }
+
+                                        ProxyMode.CloudflareWorker -> {
+                                            Column(cm) {
+                                                RenderCloudflareWorkerConfig(state)
                                             }
                                         }
                                     }
@@ -581,7 +600,61 @@ object ProxyConfigurableRenderer : ConfigurableRenderer<ProxyConfigurable> {
             ProxyMode.UseSystem -> Res.string.proxy_system
             ProxyMode.Manual -> Res.string.proxy_manual
             ProxyMode.Pac -> Res.string.proxy_pac
+            ProxyMode.CloudflareWorker -> Res.string.proxy_cloudflare_worker
         }.asStringSource()
+    }
+
+    @Composable
+    private fun RenderCloudflareWorkerConfig(
+        state: ProxyEditState,
+    ) {
+        val (workerUrl, setWorkerUrl) = state.cfWorkerUrl
+        val (apiToken, setApiToken) = state.cfApiToken
+        Column {
+            DialogConfigItem(
+                modifier = Modifier.Companion,
+                title = {
+                    Text(myStringResource(Res.string.proxy_cloudflare_worker_url))
+                },
+                value = {
+                    Row(
+                        verticalAlignment = Alignment.Companion.CenterVertically,
+                    ) {
+                        MyTextField(
+                            text = workerUrl,
+                            onTextChange = setWorkerUrl,
+                            placeholder = "https://your-worker.your-subdomain.workers.dev",
+                            modifier = Modifier.Companion.weight(1f),
+                        )
+                    }
+                }
+            )
+            ProxyConfigSpacer()
+            DialogConfigItem(
+                modifier = Modifier.Companion,
+                title = {
+                    Row {
+                        Text(myStringResource(Res.string.proxy_cloudflare_worker_token))
+                        Spacer(Modifier.Companion.width(8.dp))
+                        Help(
+                            myStringResource(Res.string.proxy_cloudflare_worker_token_description)
+                        )
+                    }
+                },
+                value = {
+                    Row(
+                        verticalAlignment = Alignment.Companion.CenterVertically,
+                    ) {
+                        MyTextField(
+                            text = apiToken,
+                            onTextChange = setApiToken,
+                            placeholder = myStringResource(Res.string.optional),
+                            modifier = Modifier.Companion.weight(1f),
+                        )
+                    }
+                }
+            )
+        }
     }
 
     @Composable
