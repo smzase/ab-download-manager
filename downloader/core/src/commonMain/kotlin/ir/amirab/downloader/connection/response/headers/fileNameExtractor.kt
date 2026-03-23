@@ -8,7 +8,7 @@ fun extractFileNameFromContentDisposition(contentDispositionValue: String): Stri
     utf8FileNameRegex.find(contentDispositionValue)
         ?.groups?.get("fileName")
         ?.value?.let {
-            runCatching { FilenameDecoder.decode(it, Charsets.UTF_8) }
+            runCatching { decodeUrlEncodedFileName(it) }
                 .getOrNull()
         }?.let {
             return it
@@ -21,12 +21,41 @@ fun extractFileNameFromContentDisposition(contentDispositionValue: String): Stri
             fileName = runCatching {
                 EmailMimeWordDecoder.decode(fileName)
             }.getOrNull() ?: fileName
-            runCatching { FilenameDecoder.decode(fileName, Charsets.UTF_8) }
+            runCatching { decodeUrlEncodedFileName(fileName) }
                 .getOrNull()
         }?.let {
             return it
         }
     return null
+}
+
+/**
+ * 解码 URL 编码的文件名，支持双重 URL 编码
+ * 例如：CRACK%25E2%2589%25A1TRICK%25EF%25BC%2581.rar
+ * 第一次解码：CRACK%E2%89%A1TRICK%EF%BC%81.rar
+ * 第二次解码：CRACK≡TRICK！.rar
+ */
+private fun decodeUrlEncodedFileName(encoded: String): String {
+    var decoded = FilenameDecoder.decode(encoded, Charsets.UTF_8)
+    // 检查是否还有 URL 编码的字符（双重编码的情况）
+    // 如果解码后的字符串仍然包含 %XX 格式的编码，再次解码
+    if (decoded.contains('%') && containsPercentEncoding(decoded)) {
+        val secondDecode = runCatching {
+            FilenameDecoder.decode(decoded, Charsets.UTF_8)
+        }.getOrNull()
+        if (secondDecode != null && secondDecode != decoded) {
+            decoded = secondDecode
+        }
+    }
+    return decoded
+}
+
+/**
+ * 检查字符串是否包含有效的百分号编码序列
+ */
+private fun containsPercentEncoding(str: String): Boolean {
+    val percentRegex = """%[0-9A-Fa-f]{2}""".toRegex()
+    return percentRegex.containsMatchIn(str)
 }
 
 private val asciiFileNameRegex = """filename=(["']?)(?<fileName>.*?[^\\])\1(?:; ?|$)"""
