@@ -41,9 +41,23 @@ class DestWriter(
 
     @Synchronized
     fun release() {
-        sink?.close()
+        val currentSink = sink
+        sink = null
+        runCatching {
+            currentSink?.close()
+        }
         status = Status.NotPrepared
 //        println("part #$id stopped to write to $seekPos")
+    }
+
+    @Synchronized
+    fun close() {
+        runCatching {
+            release()
+        }
+        runCatching {
+            writer.close()
+        }
     }
 
     fun write(buffer: Buffer, length: Long = buffer.size) {

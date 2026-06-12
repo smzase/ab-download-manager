@@ -580,6 +580,11 @@ class HLSDownloadJob(
         activeDownloadScope = null
     }
 
+    fun cancelDownloadScopeNow() {
+        activeDownloadScope?.coroutineContext?.job?.cancel()
+        activeDownloadScope = null
+    }
+
     suspend fun cancelRetry() {
         retryJob?.cancel()
         retryJob = null
@@ -596,6 +601,14 @@ class HLSDownloadJob(
         }
     }
 
+    fun stopAllPartsImmediately() {
+        partDownloaderList.values.toList().onEach {
+            it.stop()
+        }
+        clearPartDownloaderList()
+        destination.closeOpenWriters()
+    }
+
     override suspend fun pause(throwable: Throwable) {
         boot()
         failedDownloadTries = 0
@@ -603,6 +616,16 @@ class HLSDownloadJob(
         cancelDownloadScope()
         stopAllParts()
         onDownloadCanceled(throwable)
+    }
+
+    override suspend fun cancelForRemoval(throwable: Throwable) {
+        boot()
+        failedDownloadTries = 0
+        cancelRetry()
+        cancelDownloadScopeNow()
+        stopAllPartsImmediately()
+        _status.update { DownloadJobStatus.Canceled(throwable) }
+        _isDownloadActive.update { false }
     }
 
     override fun onDownloadFinishedBeforeSave() {

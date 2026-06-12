@@ -43,6 +43,9 @@ abstract class DownloadJob(
     abstract suspend fun reset()
     abstract suspend fun resume()
     abstract suspend fun pause(throwable: Throwable = CancellationException())
+    open suspend fun cancelForRemoval(throwable: Throwable = CancellationException()) {
+        pause(throwable)
+    }
     abstract suspend fun saveState()
     protected fun ensureBooted() {
         require(booted.isDone()) {

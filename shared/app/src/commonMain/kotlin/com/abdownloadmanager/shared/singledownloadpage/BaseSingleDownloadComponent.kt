@@ -298,11 +298,6 @@ abstract class BaseSingleDownloadComponent<
         scope.launch {
             val state = itemStateFlow.value as? ProcessingDownloadItemState
             if (deletePartialFileOnDownloadCancellation.value) {
-                // First pause the download immediately to stop downloading
-                if (state?.canBePaused() ?: false) {
-                    downloadSystem.manualPause(downloadId)
-                }
-                // Then remove download and delete the partial file
                 downloadSystem.removeDownload(
                     id = downloadId,
                     alsoRemoveFile = true,

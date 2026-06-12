@@ -27,6 +27,16 @@ abstract class DownloadDestination(
 
     open fun cleanUpJunkFiles() {}
 
+    open fun closeOpenWriters() {
+        synchronized(this) {
+            fileParts.forEach {
+                it.close()
+            }
+            fileParts.clear()
+            onAllFilePartsRemoved()
+        }
+    }
+
     abstract fun getWriterFor(part: DownloadPart): DestWriter
     abstract fun canGetFileWriter(): Boolean
 

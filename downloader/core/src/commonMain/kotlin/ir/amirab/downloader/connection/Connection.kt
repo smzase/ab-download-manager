@@ -9,6 +9,8 @@ data class Connection<out TResponseInfo : IResponseInfo>(
     val responseInfo: TResponseInfo,
 ) : Closeable {
     override fun close() {
-        source.close()
+        runCatching {
+            source.close()
+        }
     }
 }

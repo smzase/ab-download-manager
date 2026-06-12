@@ -157,13 +157,17 @@ class DownloadManager(
         alsoRemoveFile: (IDownloadItem) -> Boolean,
         context: DownloadItemContext = EmptyContext,
     ) {
-        kotlin.runCatching { pause(id) }
         val itemToDelete = dlListDb.getById(id) ?: return
         val job = getDownloadJob(id) ?: run {
             createJob(itemToDelete).apply { boot() }
         }
         // at this point: job will be created (and booted) if it was not created before
         contextContainer.updateContext(id) { it + context }
+        if (itemToDelete.status != DownloadStatus.Completed) {
+            kotlin.runCatching {
+                job.cancelForRemoval()
+            }
+        }
         job.downloadRemoved(
             removeOutputFile = if (itemToDelete.status == DownloadStatus.Completed) {
                 alsoRemoveFile(itemToDelete)

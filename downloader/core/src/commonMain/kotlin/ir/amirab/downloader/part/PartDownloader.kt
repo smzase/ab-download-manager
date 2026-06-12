@@ -39,6 +39,8 @@ abstract class PartDownloader<
 ) {
     private var thread: Thread? = null
     private var scope: CoroutineScope? = null
+    @Volatile
+    private var activeConnection: Connection<*>? = null
     private val _statusFlow = part.statusFlow
     val statusFlow = _statusFlow.asStateFlow()
 
@@ -145,6 +147,7 @@ abstract class PartDownloader<
     var stop = false
     fun stop() {
         stop = true
+        activeConnection?.close()
         thread?.interrupt()
         scope?.coroutineContext?.job?.cancel()
     }
@@ -202,9 +205,11 @@ abstract class PartDownloader<
     private suspend fun download() {
         onNewStatus(PartDownloadStatus.Connecting)
         val conn = connectAndVerify()
+        activeConnection = conn
         thread = thread {
             if (stop || Thread.currentThread().isInterrupted) {
                 conn.close()
+                activeConnection = null
                 onCanceled(kotlinx.coroutines.CancellationException())
                 return@thread
             }
@@ -220,6 +225,7 @@ abstract class PartDownloader<
             } catch (e: Exception) {
                 onCanceled(e)
             } finally {
+                activeConnection = null
                 thread = null
             }
         }
