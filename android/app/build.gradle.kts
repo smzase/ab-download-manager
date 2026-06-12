@@ -120,13 +120,15 @@ tasks.register(CiUtils.getCreateBinaryFolderForCiTaskName()) {
 
 private val localProperties by lazy {
     val file = project.rootProject.projectDir.resolve("local.properties")
-    file.inputStream().use {
-        Properties().apply { load(it) }
+    Properties().apply {
+        if (file.isFile) {
+            file.inputStream().use { load(it) }
+        }
     }
 }
 
 fun getFromEnvOrProperties(key: String): String? {
-    val string = (System.getenv(key)?.takeIf { it.isNotEmpty() }
-        ?: localProperties.getProperty(key))
+    val string = (System.getenv(key)?.takeIf { it.isNotBlank() }
+        ?: localProperties.getProperty(key)?.takeIf { it.isNotBlank() })
     return string
 }

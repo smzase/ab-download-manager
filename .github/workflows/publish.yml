@@ -12,6 +12,7 @@ permissions:
 jobs:
   create-packages:
     strategy:
+      fail-fast: false
       matrix:
         os: [ "ubuntu-latest", "ubuntu-24.04-arm", "windows-2022", "windows-11-arm", "macos-15-intel", "macos-15" ]
     runs-on: ${{ matrix.os }}
@@ -44,13 +45,36 @@ jobs:
         run: |
           echo "SKIP_ANDROID_BUILD=true" >> $GITHUB_ENV
 
-      - name: Use Android Secrets
+      - name: Configure Android signing
         if: matrix.os == 'ubuntu-latest'
+        shell: bash
+        env:
+          ABDM_KEYSTORE_FILE: ${{ secrets.ABDM_KEYSTORE_FILE }}
+          ABDM_KEYSTORE_FILE_PASSWORD: ${{ secrets.ABDM_KEYSTORE_FILE_PASSWORD }}
+          ABDM_KEYSTORE_KEY_ALIAS: ${{ secrets.ABDM_KEYSTORE_KEY_ALIAS }}
+          ABDM_KEYSTORE_KEY_PASSWORD: ${{ secrets.ABDM_KEYSTORE_KEY_PASSWORD }}
         run: |
-          echo "ABDM_KEYSTORE_FILE=${{ secrets.ABDM_KEYSTORE_FILE }}" >> $GITHUB_ENV
-          echo "ABDM_KEYSTORE_FILE_PASSWORD=${{ secrets.ABDM_KEYSTORE_FILE_PASSWORD }}" >> $GITHUB_ENV
-          echo "ABDM_KEYSTORE_KEY_ALIAS=${{ secrets.ABDM_KEYSTORE_KEY_ALIAS }}" >> $GITHUB_ENV
-          echo "ABDM_KEYSTORE_KEY_PASSWORD=${{ secrets.ABDM_KEYSTORE_KEY_PASSWORD }}" >> $GITHUB_ENV
+          required=(
+            ABDM_KEYSTORE_FILE
+            ABDM_KEYSTORE_FILE_PASSWORD
+            ABDM_KEYSTORE_KEY_ALIAS
+            ABDM_KEYSTORE_KEY_PASSWORD
+          )
+
+          for key in "${required[@]}"; do
+            if [ -z "${!key}" ]; then
+              echo "Android signing secret ${key} is not configured; skipping Android package build."
+              echo "SKIP_ANDROID_BUILD=true" >> "$GITHUB_ENV"
+              exit 0
+            fi
+          done
+
+          {
+            echo "ABDM_KEYSTORE_FILE=${ABDM_KEYSTORE_FILE}"
+            echo "ABDM_KEYSTORE_FILE_PASSWORD=${ABDM_KEYSTORE_FILE_PASSWORD}"
+            echo "ABDM_KEYSTORE_KEY_ALIAS=${ABDM_KEYSTORE_KEY_ALIAS}"
+            echo "ABDM_KEYSTORE_KEY_PASSWORD=${ABDM_KEYSTORE_KEY_PASSWORD}"
+          } >> "$GITHUB_ENV"
 
       # Steps specific to macOS (to create DMG for macOS)
       - name: Install create-dmg (for macOS)
