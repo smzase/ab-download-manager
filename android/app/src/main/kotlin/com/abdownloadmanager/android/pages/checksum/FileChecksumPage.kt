@@ -17,7 +17,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.abdownloadmanager.android.ui.configurable.SheetInput
+import com.abdownloadmanager.android.ui.page.PageHeader
 import com.abdownloadmanager.android.ui.page.PageTitle
+import com.abdownloadmanager.android.ui.page.PageUi
 import com.abdownloadmanager.shared.ui.configurable.item.FileChecksumConfigurable
 import com.abdownloadmanager.shared.ui.configurable.RenderSpinner
 import com.abdownloadmanager.shared.util.ClipboardUtil
@@ -28,6 +30,7 @@ import com.abdownloadmanager.shared.pages.checksum.DownloadItemWithChecksum
 import com.abdownloadmanager.shared.ui.configurable.ConfigurableUiProps
 import com.abdownloadmanager.shared.ui.widget.ActionButton
 import com.abdownloadmanager.shared.ui.widget.Help
+import com.abdownloadmanager.shared.ui.widget.PrimaryMainActionButton
 import com.abdownloadmanager.shared.ui.widget.Text
 import com.abdownloadmanager.shared.ui.widget.TransparentIconActionButton
 import com.abdownloadmanager.shared.util.FileChecksum
@@ -54,24 +57,44 @@ import kotlinx.coroutines.flow.MutableStateFlow
 fun FileChecksumPage(component: AndroidFileChecksumComponent) {
     val pageTitle = myStringResource(Res.string.file_checksum_page)
     val horizontalPadding = mySpacings.largeSpace
-    Column(
-        Modifier
-            .background(myColors.background)
-            .statusBarsPadding()
-    ) {
-        PageTitle(pageTitle)
-        ItemsToBeChecked(
-            Modifier
-                .fillMaxWidth()
-                .weight(1f)
-                .padding(horizontal = horizontalPadding),
-            component,
-        )
-        Actions(
-            Modifier,
-            component,
-        )
-    }
+    PageUi(
+        header = {
+            PageHeader(
+                modifier = Modifier
+                    .statusBarsPadding(),
+                headerTitle = {
+                    PageTitle(pageTitle)
+                },
+                leadingIcon = {
+                    TransparentIconActionButton(
+                        icon = MyIcons.back,
+                        contentDescription = Res.string.back.asStringSource(), onClick = component::onRequestClose,
+                        modifier = Modifier,
+                    )
+                }
+            )
+        },
+        footer = {},
+        content = {
+            Column(
+                Modifier
+                    .padding(it.paddingValues)
+                    .background(myColors.background)
+            ) {
+                ItemsToBeChecked(
+                    Modifier
+                        .fillMaxWidth()
+                        .weight(1f)
+                        .padding(horizontal = horizontalPadding),
+                    component,
+                )
+                Actions(
+                    Modifier,
+                    component,
+                )
+            }
+        }
+    )
 }
 
 @Composable
@@ -177,16 +200,10 @@ private fun Actions(
             }
             Spacer(Modifier.height(8.dp))
             Row {
-                ActionButton(
+                PrimaryMainActionButton(
                     myStringResource(Res.string.start),
                     onClick = component::onRequestStartCheck,
                     enabled = !uiState.isChecking,
-                    modifier = Modifier.weight(1f)
-                )
-                Spacer(Modifier.width(8.dp))
-                ActionButton(
-                    myStringResource(Res.string.close),
-                    onClick = component::onRequestClose,
                     modifier = Modifier.weight(1f)
                 )
             }
@@ -327,7 +344,10 @@ private data object FileChecksumTableCellRenderers {
             configurable = fileChecksumConfigurable,
             isOpened = true,
             onDismiss = onCloseRequest,
-            onConfirm = onRequestSaveNewChecksum,
+            onConfirm = {
+                // it's better to improve SheetInput logic
+                onRequestSaveNewChecksum(editChecksumFlow.value)
+            },
         ) {
             RenderConfigurable(
                 fileChecksumConfigurable,

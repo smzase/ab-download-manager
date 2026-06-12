@@ -8,9 +8,6 @@ plugins {
 kotlin {
     jvm("desktop")
     androidTarget("android") {
-        compilerOptions {
-            jvmTarget.set(JvmTarget.JVM_21)
-        }
     }
     sourceSets {
         commonMain.dependencies {
@@ -21,6 +18,7 @@ kotlin {
             api(libs.kotlin.datetime)
             api(libs.semver)
             api(libs.arrow.optics)
+            api(libs.kermit)
             api("ir.amirab.util:platform:1")
         }
         val desktopMain by getting

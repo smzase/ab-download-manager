@@ -14,6 +14,55 @@
 
 ### Security
 
+## 1.9.0
+
+### Added
+
+- Czech language support
+- User-friendly error messages for download errors (#1252)
+- An option to remember the last selected queue and quickly add downloads to it by long-clicking the `Add` button (
+  #1246)
+- An option to import/export downloads using JSON format
+- A `Download` button on the multi-download page for cases where users do not want to start downloads without queue
+  processing (#1247)
+- The app now includes a logger that can be enabled using a command-line flag (#1226)
+- Startup errors are now logged automatically to help diagnose initialization issues
+
+### Changed
+
+- The default unqueued "Max Concurrent Downloads" value has been changed from "Unlimited" to 3 (This can be customized
+  in the app settings)
+
+### Improved
+
+- Updated translations
+- Added an indicator on the Android main page when resume is not supported (#1248)
+- Extract the file name from the download link as a fallback when no response information is available (#1209)
+- Minor UI/UX improvements
+
+## 1.8.8
+
+### Added
+
+- Reordering categories (#1119)
+
+### Changed
+
+- Quit Shortcut changed from `Ctrl-W` to `Ctrl-Q`
+
+### Fixed
+
+- Show part info not showing automatically if it was previously shown (#1183)
+- "Edit Saved Checksum" now correctly updated on the Checksum page on Android
+- the Main window correctly remembers its maximized state (#1185)
+- System tray now uses the native UI on Linux (arm64)
+- Other UI/UX improvements
+
+### Improved
+
+- Updated translations
+- Minor UI improvements
+
 ## 1.8.7
 
 ### Added

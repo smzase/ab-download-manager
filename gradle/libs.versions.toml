@@ -1,41 +1,43 @@
 [versions]
 fastscrollerCore = "0.3.2"
-kotlin = "2.3.10"
-ksp = "2.3.3"
-compose = "1.10.1"
-kotlin-serialization = "1.10.0"
+kotlin = "2.4.0"
+ksp = "2.3.9"
+compose = "1.11.1"
+kotlin-serialization = "1.11.0"
 okhttp = "5.3.2"
 okio = "3.16.4"
-coroutines = "1.10.2"
-koin = "4.1.1"
-koinAnnotation = "2.3.1"
-decompose = "3.4.0"
+coroutines = "1.11.0"
+koin = "4.2.1"
+koinAnnotation = "4.2.1"
+decompose = "3.5.0"
 essenty = "2.5.0"
-logback = "1.5.22"
-buildConfig = "6.0.7"
+buildConfig = "6.0.10"
 changelog = "2.5.0"
-http4k = "6.28.1.0"
-arrow = "2.2.1.1"
-datastore = "1.2.0"
-aboutLibraries = "13.2.1"
-jna = "5.18.1"
-datetime = "0.7.1"
+http4k = "6.51.0.0"
+arrow = "2.2.3"
+datastore = "1.2.1"
+aboutLibraries = "14.2.1"
+jna = "5.19.0"
+datetime = "0.8.0"
 fileKit = "0.8.8"
 reorderable = "3.0.0"
 semver = "3.0.0"
 jgit = "7.3.0.202506031305-r"
 osThemeDetector = "3.9.1"
 kotlinFileWatcher = "1.4.0"
-markdownRenderer = "0.39.2"
-proxyVole = "2.0.0"
+markdownRenderer = "0.41.0"
+proxyVole = "2.0.1"
 jbrApi = "1.10.1"
 gradleVersions = "0.53.0"
 handlebars = "4.5.0"
-composeNativeTray = "1.1.0"
-
-agp = "8.12.3"
-androidx-core = "1.17.0"
-androidx-activity-compose = "1.12.4"
+composeNativeTray = "1.3.0"
+autoServiceKsp = "1.2.0"
+autoService = "1.1.1"
+kermit = "2.1.0"
+agp = "8.13.2"
+androidx-core = "1.18.0"
+androidx-activity-compose = "1.13.0"
+slf4jApi = "2.0.18"
 
 [libraries]
 
@@ -51,7 +53,7 @@ okhttp-coroutines = { module = "com.squareup.okhttp3:okhttp-coroutines", version
 okio-okio = { module = "com.squareup.okio:okio", version.ref = "okio" }
 
 koin-core = { module = "io.insert-koin:koin-core", version.ref = "koin" }
-koin-compose = { module = "io.insert-koin:koin-compose", version = "1.0.1" }
+koin-compose = { module = "io.insert-koin:koin-compose", version.ref = "koin" }
 koin-compiler = { module = "io.insert-koin:koin-ksp-compiler", version.ref = "koinAnnotation" }
 koin-annotations = { module = "io.insert-koin:koin-annotations", version.ref = "koinAnnotation" }
 
@@ -70,8 +72,11 @@ composeFileKit = { module = "io.github.vinceglb:filekit-compose", version.ref = 
 
 fastscroller-core = { module = "io.github.oikvpqya.compose.fastscroller:fastscroller-core", version.ref = "fastscrollerCore" }
 
-loggers-logback-core = { module = "ch.qos.logback:logback-core", version.ref = "logback" }
-loggers-logback-classic = { module = "ch.qos.logback:logback-classic", version.ref = "logback" }
+slf4j-api = { module = "org.slf4j:slf4j-api", version.ref = "slf4jApi" }
+kermit = { module = "co.touchlab:kermit", version.ref = "kermit" }
+autoService-ksp = { module = "dev.zacsweers.autoservice:auto-service-ksp", version.ref = "autoServiceKsp" }
+autoService-annoations = { module = "com.google.auto.service:auto-service-annotations", version.ref = "autoService" }
+
 
 nanoHttpd-core = "org.nanohttpd:nanohttpd:2.3.1"
 http4k-core = { module = "org.http4k:http4k-core", version.ref = "http4k" }
@@ -121,6 +126,7 @@ kotlinFileWatcher = { module = "io.github.irgaly.kfswatch:kfswatch", version.ref
 composeNativeTray = { module = "io.github.kdroidfilter:composenativetray", version.ref = "composeNativeTray" }
 proxyVole = { module = "org.bidib.com.github.markusbernhardt:proxy-vole", version.ref = "proxyVole" }
 jbrApi = { module = "org.jetbrains.runtime:jbr-api", version.ref = "jbrApi" }
+
 [plugins]
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 compose = { id = "org.jetbrains.compose", version.ref = "compose" }

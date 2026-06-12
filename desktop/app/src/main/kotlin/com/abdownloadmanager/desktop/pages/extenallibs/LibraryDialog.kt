@@ -119,7 +119,7 @@ private fun LibraryDescription(description: String) {
 }
 
 @Composable
-private fun LibraryLicenseInfo(licenses: ImmutableSet<License>) {
+private fun LibraryLicenseInfo(licenses: Set<License>) {
     KeyValue(myStringResource(Res.string.license)) {
         val l = licenses.map {
             it.name.asStringSource() to it.url
