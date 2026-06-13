@@ -12,6 +12,7 @@ import com.abdownloadmanager.desktop.AppArguments
 import com.abdownloadmanager.desktop.AppComponent
 import com.abdownloadmanager.desktop.AppEffects
 import com.abdownloadmanager.desktop.actions.gotoSettingsAction
+import com.abdownloadmanager.desktop.actions.newDownloadAction
 import com.abdownloadmanager.desktop.actions.requestExitAction
 import com.abdownloadmanager.desktop.actions.showDownloadList
 import com.abdownloadmanager.desktop.pages.about.ShowAboutDialog
@@ -227,6 +228,7 @@ private fun ApplicationScope.SystemTray(
         LaunchedEffect(Unit) { PlatformDockToggler.hide() }
         val menu = remember {
             buildMenu {
+                +newDownloadAction
                 +showDownloadList
                 +gotoSettingsAction
                 +requestExitAction
