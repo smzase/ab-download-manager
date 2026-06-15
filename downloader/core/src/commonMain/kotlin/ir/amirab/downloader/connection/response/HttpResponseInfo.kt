@@ -7,7 +7,6 @@ import ir.amirab.downloader.exception.UnSuccessfulResponseException
 import ir.amirab.downloader.utils.FileNameUtil
 import ir.amirab.downloader.utils.throwIf
 import ir.amirab.util.HttpUrlUtils
-import ir.amirab.util.ifThen
 
 data class HttpResponseInfo(
     val statusCode: Int,
@@ -59,21 +58,22 @@ data class HttpResponseInfo(
     }
 
     val fileName: String? by lazy {
-        run {
+        val detectedName = run {
             val nameFromHeader = responseHeaders["content-disposition"]?.let {
                 extractFileNameFromContentDisposition(it)
             }
             nameFromHeader ?: HttpUrlUtils.extractNameFromLink(requestUrl)
+        }.orEmpty()
+        val fileName = if (isWebPage && shouldUseHtmlExtension(detectedName)) {
+            FileNameUtil.replaceExtension(
+                detectedName,
+                "html",
+                true
+            )
+        } else {
+            detectedName
         }
-            .orEmpty()
-            .ifThen(isWebPage) {
-                FileNameUtil.replaceExtension(
-                    this,
-                    "html",
-                    true
-                )
-            }
-            .takeIf { it.isNotEmpty() }
+        fileName.takeIf { it.isNotEmpty() }
     }
 
     // It is good to use these properties to check file is valid
@@ -99,4 +99,8 @@ fun HttpResponseInfo.expectSuccess() = apply {
     unsuccessFullException?.let {
         throw it
     }
+}
+
+private fun shouldUseHtmlExtension(fileName: String): Boolean {
+    return fileName.isBlank() || FileNameUtil.getExtensionOrNull(fileName) == null
 }
