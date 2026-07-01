@@ -52,6 +52,19 @@ class OkHttpHttpDownloaderClient(
                             ?.forEach { (k, v) ->
                                 header(k, v)
                             }
+                        // Add Referer header: use downloadPage if available,
+                        // otherwise derive from download URL origin.
+                        // Many download gateways use Referer-based anti-leech protection;
+                        // without it they return 403 Access Denied.
+                        val hasReferer = downloadCredentials.headers
+                            ?.keys?.any { it.equals("Referer", true) } == true
+                        if (!hasReferer) {
+                            val referer = downloadCredentials.downloadPage
+                                ?.takeIf { it.isNotBlank() }
+                                ?: downloadCredentials.link.toHttpUrlOrNull()
+                                    ?.let { "${it.scheme}://${it.host}/" }
+                            referer?.let { header("Referer", it) }
+                        }
                         defaultHeadersInLast().forEach { (k, v) ->
                             header(k, v)
                         }
