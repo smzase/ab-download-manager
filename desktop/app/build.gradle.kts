@@ -1,13 +1,13 @@
-import buildlogic.*
+import buildlogic.CiUtils
 import buildlogic.versioning.*
-import ir.amirab.installer.InstallerTargetFormat
-import org.jetbrains.changelog.Changelog
-import org.jetbrains.compose.desktop.application.dsl.TargetFormat
-import ir.amirab.util.platform.Platform
-import org.jetbrains.compose.desktop.application.dsl.TargetFormat.*
 import com.mikepenz.aboutlibraries.plugin.DuplicateMode
 import com.mikepenz.aboutlibraries.plugin.DuplicateRule
+import dev.nucleusframework.desktop.application.dsl.TargetFormat
 import ir.amirab.util.platform.Arch
+import ir.amirab.util.platform.Platform
+import ir.amirab.util.platform.isLinux
+import ir.amirab.util.platform.isMac
+import ir.amirab.util.platform.isWindows
 
 plugins {
     id(MyPlugins.kotlin)
@@ -15,6 +15,7 @@ plugins {
     id(Plugins.Kotlin.serialization)
     id(Plugins.ksp)
     id(Plugins.aboutLibraries)
+    id(Plugins.kotlinRpc)
     id("ir.amirab.installer-plugin")
 //    id(MyPlugins.proguardDesktop)
 }
@@ -35,9 +36,6 @@ dependencies {
 
     implementation(libs.compose.reorderable)
 
-    implementation(libs.http4k.core)
-    implementation(libs.http4k.client.okhttp)
-
     implementation(libs.arrow.core)
     implementation(libs.arrow.optics)
     ksp(libs.arrow.opticKsp)
@@ -55,6 +53,19 @@ dependencies {
     implementation(libs.jna.core)
     implementation(libs.jna.platform)
 
+    implementation(libs.kotlin.reflect) // used by kotlin-rpc
+    implementation(libs.kotlinx.rpc.client)
+    implementation(libs.kotlinx.rpc.client.ktor)
+    implementation(libs.kotlinx.rpc.server)
+    implementation(libs.kotlinx.rpc.server.ktor)
+    implementation(libs.kotlinx.rpc.serializationJson)
+
+    implementation(libs.ktor.client.okhttp)
+    implementation(libs.ktor.server.cio)
+
+    // cli
+    implementation(libs.clikit)
+
     implementation(project(":downloader:core"))
     implementation(project(":downloader:monitor"))
 
@@ -63,11 +74,11 @@ dependencies {
     implementation(project(":desktop:app-utils"))
 
     implementation(libs.composeNativeTray)
+    implementation(libs.nucleus.aot)
 
     implementation(project(":shared:app"))
     implementation(project(":shared:utils"))
     implementation(project(":shared:updater"))
-    implementation(project(":shared:nanohttp4k"))
     implementation(project(":desktop:mac_utils"))
     implementation(project(":desktop:slf4j-impl"))
 }
@@ -82,17 +93,21 @@ aboutLibraries {
     }
 }
 
+val isAOTEnabled = false
+
 tasks.processResources {
     from(tasks.named("exportLibraryDefinitions"))
 }
 
+val cliBinaryName = "${getAppName()}Cli"
+val nativeMessagingHostBinaryName = "${getAppName()}NativeMessagingHost"
+
 val desktopPackageName = "com.abdownloadmanager.desktop"
-compose {
-    desktop {
-        application {
+nucleus {
+    application {
 //            val getProguardConfigurationsTask = tasks.getProguardConfigurations.get()
-            buildTypes.release.proguard {
-                isEnabled.set(false)
+        buildTypes.release.proguard {
+            isEnabled.set(false)
 //                obfuscate.set(false)
 //                optimize.set(true)
 //                configurationFiles.from(
@@ -101,60 +116,72 @@ compose {
 //                        !it.name.contains("r8")
 //                    },
 //                )
-            }
+        }
 
-            // Define the main class for the application.
-            mainClass = "$desktopPackageName.AppKt"
-            nativeDistributions {
-                // avoid java 25 warning
-                jvmArgs("--enable-native-access=ALL-UNNAMED")
-                modules(
-                    "java.instrument",
-                    "jdk.unsupported",
-                    "jdk.accessibility",
+        // Define the main class for the application.
+        mainClass = "$desktopPackageName.AppKt"
+        additionalLaunchers {
+            create(cliBinaryName) {
+                mainClass = "$desktopPackageName.cli.CliAppKt"
+                winConsole = true
+                jvmArgs(*defaultJvmArgs())
+            }
+            create(nativeMessagingHostBinaryName) {
+                mainClass = "$desktopPackageName.nativemessaging.host.NativeMessagingHostKt"
+                winConsole = true
+                jvmArgs(
+                    *defaultJvmArgs(),
+                    // we don't want to write anything other than browser's stdio!
+                    "-Xlog:disable"
                 )
-                targetFormats(Msi, Deb)
-                if (Platform.getCurrentPlatform() == Platform.Desktop.Linux) {
-                    // filekit library requires this module in linux.
-                    modules("jdk.security.auth")
-                }
-                packageVersion = getAppVersionStringForPackaging()
-                packageName = getAppName()
-                vendor = "abdownloadmanager.com"
-                appResourcesRootDir.set(project.layout.projectDirectory.dir("resources"))
-                val menuGroupName = getPrettifiedAppName()
-                licenseFile.set(rootProject.file("LICENSE"))
-                linux {
-                    debPackageVersion = getAppVersionStringForPackaging(Deb)
-                    rpmPackageVersion = getAppVersionStringForPackaging(Rpm)
-                    appCategory = "Network"
-                    iconFile = project.file("icons/icon.png")
-                    menuGroup = menuGroupName
-                    shortcut = true
-                }
-                macOS {
-                    pkgPackageVersion = getAppVersionStringForPackaging(Pkg)
-                    dmgPackageVersion = getAppVersionStringForPackaging(Dmg)
-                    iconFile = project.file("icons/icon.icns")
-                    infoPlist {
-                        extraKeysRawXml = """
+            }
+        }
+        nativeDistributions {
+            cleanupNativeLibs = true
+            aotCache {
+                enabled = isAOTEnabled
+            }
+            modules(
+                "java.instrument",
+                "jdk.unsupported",
+                "jdk.accessibility",
+            )
+            if (Platform.isLinux()) {
+                // filekit library requires this module in linux.
+                modules("jdk.security.auth")
+            }
+            packageVersion = getAppVersionStringForPackaging()
+            packageName = getAppName()
+            vendor = "abdownloadmanager.com"
+            appResourcesRootDir.set(project.layout.projectDirectory.dir("resources"))
+            val menuGroupName = getPrettifiedAppName()
+            licenseFile.set(rootProject.file("LICENSE"))
+            linux {
+                appCategory = "Network"
+                iconFile = project.file("icons/icon.png")
+                menuGroup = menuGroupName
+                shortcut = true
+            }
+            macOS {
+                iconFile = project.file("icons/icon.icns")
+                infoPlist {
+                    extraKeysRawXml = """
                             <key>LSUIElement</key>
                             <string>true</string>
                         """.trimIndent()
-                    }
+                }
+                if (Platform.isMac()) {
                     jvmArgs("-Dapple.awt.enableTemplateImages=true")
                 }
-                windows {
-                    exePackageVersion = getAppVersionStringForPackaging(Exe)
-                    msiPackageVersion = getAppVersionStringForPackaging(Msi)
-                    upgradeUuid = properties["INSTALLER.WINDOWS.UPGRADE_UUID"]?.toString()
-                    iconFile = project.file("icons/icon.ico")
-                    console = false
-                    dirChooser = true
-                    shortcut = true
-                    menuGroup = menuGroupName
-                    menu = true
-                }
+            }
+            windows {
+                upgradeUuid = providers.gradleProperty("INSTALLER.WINDOWS.UPGRADE_UUID").orNull
+                iconFile = project.file("icons/icon.ico")
+                console = false
+                dirChooser = true
+                shortcut = true
+                menuGroup = menuGroupName
+                menu = true
             }
         }
     }
@@ -166,7 +193,7 @@ installerPlugin {
     windows {
         appName = getAppName()
         appDisplayName = getPrettifiedAppName()
-        appVersion = getAppVersionStringForPackaging(Exe)
+        appVersion = getAppVersionStringForPackaging(TargetFormat.Exe)
         appDisplayVersion = getAppVersionString()
         appDataDirName = getAppDataDirName()
         inputDir = project.file("build/compose/binaries/main-release/app/${getAppName()}")
@@ -175,8 +202,10 @@ installerPlugin {
         iconFile = project.file("icons/icon.ico")
         nsisTemplate = project.file("resources/installer/nsis-script-template.nsi")
         extraParams = mapOf(
+            "native_messaging_host_binary_name" to nativeMessagingHostBinaryName,
+            "cli_binary_name" to cliBinaryName,
             "app_publisher" to "abdownloadmanager.com",
-            "app_version_with_build" to "${getAppVersionStringForPackaging(Exe)}.0",
+            "app_version_with_build" to "${getAppVersionStringForPackaging(TargetFormat.Exe)}.0",
             "source_code_url" to "https://github.com/amir1376/ab-download-manager",
             "project_website" to "www.abdownloadmanager.com",
             "copyright" to "© 2024-present AB Download Manager App",
@@ -195,12 +224,57 @@ installerPlugin {
     }
 }
 
+/**
+ * Temporary workaround. needs to be improved by the plugin.
+ * I want to add default jvm-args used by the default launcher.
+ * however when I add a single item to the jvmArgs, all default values are gone!
+ * so I have to manually add these default values to each additional launcher
+ */
+fun defaultJvmArgs(): Array<String> {
+    fun appDir(vararg pathParts: String): String {
+        /** For windows we need to pass '\\' to jpackage file, each '\' need to be escaped.
+        Otherwise '$APPDIR\resources' is passed to jpackage,
+        and '\r' is treated as a special character at run time.
+         */
+        val separator = if (Platform.isWindows()) "\\\\" else "/"
+        return listOf($$"$APPDIR", *pathParts).joinToString(separator) { it }
+    }
+
+    return buildList {
+        if (isAOTEnabled) {
+            add("-XX:AOTCache=${appDir("app.aot")}")
+        }
+//        add("-Djpackage.app-version=1.0.0")
+        add("-Dcompose.application.resources.dir=${appDir("resources")}")
+        add("-Dcompose.application.configure.swing.globals=true")
+        add("--enable-native-access=ALL-UNNAMED")
+        add("-Dnucleus.executable.type=dev")
+        add("-Dnucleus.app.id=${getAppName()}")
+        if (Platform.isMac()) {
+            add("-Dapple.awt.enableTemplateImages=true")
+        }
+        add("-Dskiko.library.path=${appDir()}")
+    }.toTypedArray()
+}
+
+fun Task.dependsOnAOT() {
+    if (isAOTEnabled) {
+        dependsOn("generateReleaseAotCache")
+    }
+}
+
+val postReleaseDistributable = tasks.register("postReleaseDistributable") {
+    dependsOn("createReleaseDistributable")
+    description = "Any modification need to be added to the app distributable folder, should be added here"
+    dependsOnAOT()
+}
+installerPlugin.dependsOn(postReleaseDistributable)
 
 // ======= begin of GitHub action stuff
 val ciDir = CiUtils.getCiDir(project)
 
 val appPackageNameByComposePlugin
-    get() = requireNotNull(compose.desktop.application.nativeDistributions.packageName) {
+    get() = requireNotNull(nucleus.application.nativeDistributions.packageName) {
         "compose.desktop.application.nativeDistributions.packageName must not be null!"
     }
 
@@ -224,18 +298,20 @@ fun AbstractArchiveTask.preserveFileAttributes() {
     useFileSystemPermissions()
 }
 
-val createDistributableAppArchiveTar by tasks.registering(Tar::class) {
+val createDistributableAppArchiveTar = tasks.register("createDistributableAppArchiveTar", Tar::class) {
+    dependsOn(postReleaseDistributable)
     preserveFileAttributes()
     archiveFileName.set("app.tar.gz")
     compression = Compression.GZIP
     fromAppImagePath()
 }
-val createDistributableAppArchiveZip by tasks.registering(Zip::class) {
+val createDistributableAppArchiveZip = tasks.register("createDistributableAppArchiveZip", Zip::class) {
+    dependsOn(postReleaseDistributable)
     preserveFileAttributes()
     archiveFileName.set("app.zip")
     fromAppImagePath()
 }
-val createDistributableAppArchive by tasks.registering {
+val createDistributableAppArchive = tasks.register("createDistributableAppArchive") {
     when (Platform.getCurrentPlatform()) {
         Platform.Desktop.Linux,
         Platform.Desktop.MacOS -> dependsOn(createDistributableAppArchiveTar)
@@ -290,15 +366,3 @@ tasks.register(CiUtils.getCreateBinaryFolderForCiTaskName()) {
     }
 }
 // ======= end of GitHub action stuff
-
-fun TargetFormat.toInstallerTargetFormat(): InstallerTargetFormat {
-    return when (this) {
-        AppImage -> error("$this is not recognized as installer")
-        Deb -> InstallerTargetFormat.Deb
-        Rpm -> InstallerTargetFormat.Rpm
-        Dmg -> InstallerTargetFormat.Dmg
-        Pkg -> InstallerTargetFormat.Pkg
-        Exe -> InstallerTargetFormat.Exe
-        Msi -> InstallerTargetFormat.Msi
-    }
-}

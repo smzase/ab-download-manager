@@ -37,9 +37,11 @@ import ir.amirab.util.compose.StringSource
 import ir.amirab.util.flow.combineStateFlows
 import ir.amirab.util.flow.mapStateFlow
 import ir.amirab.util.flow.onEachLatest
+import ir.amirab.util.toSingleLine
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.selects.select
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
 abstract class BaseAddSingleDownloadComponent(
@@ -157,7 +159,9 @@ abstract class BaseAddSingleDownloadComponent(
     }
 
     fun setName(name: String) {
-        downloadChecker.name.update { name }
+        val refinedName = name
+            .toSingleLine()
+        downloadChecker.name.update { refinedName }
     }
 
     fun setOnDuplicateStrategy(onDuplicateStrategy: OnDuplicateStrategy) {
@@ -172,7 +176,7 @@ abstract class BaseAddSingleDownloadComponent(
         credentials
             .map { it.link }
             .distinctUntilChanged()
-            .debounce(250)
+            .debounce(250.milliseconds)
             .onEachLatest { link ->
                 perHostSettingsManager
                     .getSettingsForURL(link)

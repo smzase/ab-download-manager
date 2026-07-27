@@ -17,6 +17,7 @@ import ir.amirab.downloader.exception.ServerResumeSupportChangeException
 import ir.amirab.downloader.exception.TooManyErrorException
 import ir.amirab.downloader.part.*
 import ir.amirab.downloader.utils.*
+import ir.amirab.downloader.utils.speedlimiter.SpeedLimiter
 import ir.amirab.util.tryLocked
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.launchIn
@@ -24,8 +25,8 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import okio.Throttler
 import java.util.concurrent.ConcurrentHashMap
+import kotlin.time.Duration.Companion.milliseconds
 
 
 /**
@@ -515,7 +516,7 @@ class HttpDownloadJob(
                     cancelDownloadScope()
                     stopAllParts()
                     _status.update { DownloadJobStatus.Retrying(delayForEachRetry) }
-                    delay(delayForEachRetry)
+                    delay(delayForEachRetry.milliseconds)
                     createAndInitializeDownloadScope()
                 }
                 retryJob = job
@@ -577,7 +578,7 @@ class HttpDownloadJob(
         }
     }
 
-    private val jobThrottler = Throttler()
+    private val jobThrottler = SpeedLimiter()
 
     private val partDownloaderList = ConcurrentHashMap<Long, HttpPartDownloader>()
     private val listenerJobs: MutableMap<Long, Job> = ConcurrentHashMap<Long, Job>()
@@ -598,7 +599,7 @@ class HttpDownloadJob(
                     },
                     client = client,
                     speedLimiters = listOf(
-                        downloadManager.throttler,
+                        downloadManager.speedLimiter,
                         jobThrottler,
                     ),
                     strictMode = strictDownload,

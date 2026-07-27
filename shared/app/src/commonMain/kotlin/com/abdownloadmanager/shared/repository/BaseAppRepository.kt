@@ -18,6 +18,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import kotlin.time.Duration.Companion.milliseconds
 
 open class BaseAppRepository(
     protected val scope: CoroutineScope,
@@ -43,8 +44,10 @@ open class BaseAppRepository(
     val maxDownloadRetryCount = appSettings.maxDownloadRetryCount
     val useAverageSpeed = appSettings.useAverageSpeed
     val saveLocation = appSettings.defaultDownloadFolder
-    val integrationEnabled = appSettings.browserIntegrationEnabled
-    val integrationPort = appSettings.browserIntegrationPort
+    val apiEnabled = appSettings.apiEnabled
+    val apiPort = appSettings.apiPort
+    val apiAuthEnabled = appSettings.apiAuthEnabled
+    val apiAuthKey = appSettings.apiAuthKey
     val trackDeletedFilesOnDisk = appSettings.trackDeletedFilesOnDisk
 
     override val sizeUnit = appSettings.sizeUnit.mapStateFlow {
@@ -56,13 +59,13 @@ open class BaseAppRepository(
 
 
     fun setSizeUnit(sizeUnit: ConvertSizeConfig) {
-        SupportedSizeUnits.Companion.fromConfig(sizeUnit)?.let {
+        SupportedSizeUnits.fromConfig(sizeUnit)?.let {
             appSettings.sizeUnit.value = it
         }
     }
 
     fun setSpeedUnit(speedUnit: ConvertSizeConfig) {
-        SupportedSizeUnits.Companion.fromConfig(speedUnit)?.let {
+        SupportedSizeUnits.fromConfig(speedUnit)?.let {
             appSettings.speedUnit.value = it
         }
     }
@@ -83,7 +86,7 @@ open class BaseAppRepository(
 
     init {
         saveLocation
-            .debounce(500)
+            .debounce(500.milliseconds)
             .withPrevious()
             .onEach { (oldDownloadFolder, newDownloadFolder) ->
                 if (oldDownloadFolder == null) {
@@ -96,59 +99,59 @@ open class BaseAppRepository(
             }.launchIn(scope)
         //maybe its better to move this to another place
         appSettings.autoStartOnBoot
-            .debounce(500)
+            .debounce(500.milliseconds)
             .onEach { enabled ->
                 AutoStartManager.startOnBoot(enabled)
             }.launchIn(scope)
         speedLimiter
-            .debounce(500)
+            .debounce(500.milliseconds)
             .onEach {
                 downloadSettings.globalSpeedLimit = it
                 downloadManager.limitGlobalSpeed(it)
             }.launchIn(scope)
         useAverageSpeed
-            .debounce(500)
+            .debounce(500.milliseconds)
             .onEach {
                 downloadMonitor.useAverageSpeed = it
             }.launchIn(scope)
         threadCount
-            .debounce(500)
+            .debounce(500.milliseconds)
             .onEach {
                 downloadSettings.defaultThreadCount = it
                 downloadManager.reloadSetting()
             }.launchIn(scope)
         dynamicPartCreation
-            .debounce(500)
+            .debounce(500.milliseconds)
             .onEach {
                 downloadSettings.dynamicPartCreationMode = it
                 downloadManager.reloadSetting()
             }.launchIn(scope)
         useServerLastModifiedTime
-            .debounce(500)
+            .debounce(500.milliseconds)
             .onEach {
                 downloadSettings.useServerLastModifiedTime = it
                 downloadManager.reloadSetting()
             }.launchIn(scope)
         appendExtensionToIncompleteDownloads
-            .debounce(500)
+            .debounce(500.milliseconds)
             .onEach {
                 downloadSettings.appendExtensionToIncompleteDownloads = it
                 downloadManager.reloadSetting()
             }.launchIn(scope)
         useSparseFileAllocation
-            .debounce(500)
+            .debounce(500.milliseconds)
             .onEach {
                 downloadSettings.useSparseFileAllocation = it
                 downloadManager.reloadSetting()
             }.launchIn(scope)
         maxDownloadRetryCount
-            .debounce(500)
+            .debounce(500.milliseconds)
             .onEach {
                 downloadSettings.maxDownloadRetryCount = it
                 downloadManager.reloadSetting()
             }.launchIn(scope)
         trackDeletedFilesOnDisk
-            .debounce(500)
+            .debounce(500.milliseconds)
             .onEach { enabled ->
                 if (enabled) {
                     removedDownloadsFromDiskTracker.removeDownloadsThatFilesAreMissing()
@@ -158,7 +161,7 @@ open class BaseAppRepository(
                 }
             }.launchIn(scope)
         maxConcurrentDownloads
-            .debounce(500)
+            .debounce(500.milliseconds)
             .onEach {
                 downloadSystem.manualDownloadQueue.setMaxConcurrent(it)
             }.launchIn(scope)

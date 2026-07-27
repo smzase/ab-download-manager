@@ -12,17 +12,6 @@
     <a href="https://crowdin.com/project/ab-download-manager"><img alt="Crowdin" src="https://badges.crowdin.net/ab-download-manager/localized.svg"></a>
 </p>
 
-<p align="center">
-  <a href="https://trendshift.io/repositories/13372" target="_blank"><img src="https://trendshift.io/api/badge/repositories/13372" alt="amir1376%2Fab-download-manager | Trendshift" style="width: 250px; height: 55px;" width="250" height="55"/></a>
-  <a href="https://hellogithub.com/repository/amir1376/ab-download-manager" target="_blank">
-    <picture>
-        <source media="(prefers-color-scheme: dark)" srcset="https://abroad.hellogithub.com/v1/widgets/recommend.svg?rid=ed035ce95345465c813490be631f1917&claim_uid=RTjPbAI9LNG6mnJ&theme=dark" height="55">
-        <source media="(prefers-color-scheme: light)" srcset="https://abroad.hellogithub.com/v1/widgets/recommend.svg?rid=ed035ce95345465c813490be631f1917&claim_uid=RTjPbAI9LNG6mnJ&theme=neutral" height="55">
-        <img src="https://abroad.hellogithub.com/v1/widgets/recommend.svg?rid=ed035ce95345465c813490be631f1917&claim_uid=RTjPbAI9LNG6mnJ&theme=neutral" alt="Featured｜HelloGitHub" style="width: 250px; height: 55px;" width="250" height="55" />
-    </picture>
-</a>
-</p>
-
 <a href="https://abdownloadmanager.com" target="_blank">
     <img alt="AB Download Manager 横幅" src="assets/banners/app_banner.png"/>
 </a>
@@ -53,6 +42,8 @@
 
 #### Linux 安装脚本
 
+The recommended way to install the app on Linux
+
 ```bash
 bash <(curl -fsSL https://raw.githubusercontent.com/amir1376/ab-download-manager/master/scripts/install.sh)
 ```
@@ -82,6 +73,9 @@ brew tap amir1376/tap && brew install --cask ab-download-manager
 有关其他安装方法、卸载说明和更多详细信息，请参阅 [wiki](https://github.com/amir1376/ab-download-manager/wiki/) 页面。
 
 ### 浏览器扩展
+
+<a href="https://addons.mozilla.org/en-US/firefox/addon/ab-download-manager/"><img src="https://img.shields.io/amo/v/ab-download-manager?label=Firefox&logo=firefoxbrowser" alt="Firefox Add-ons Version"></a>
+<a href="https://chromewebstore.google.com/detail/bbobopahenonfdgjgaleledndnnfhooj"> <img src="https://img.shields.io/chrome-web-store/v/bbobopahenonfdgjgaleledndnnfhooj?label=Chrome&logo=googlechrome" alt="Chrome Web Store Version"></a>
 
 您可以下载浏览器扩展来将应用与浏览器集成。
 
@@ -189,6 +183,8 @@ AB 下载管理器项目包含多个相关仓库：
 > **注意**。本项目由 GitHub Actions 编译和发布，配置文件在[这里](./.github/workflows/publish.yml)，所以如果您遇到任何问题，也可以参考该文件。
 
 ## 翻译
+
+<a href="https://crowdin.com/project/ab-download-manager"><img alt="Crowdin" src="https://badges.crowdin.net/ab-download-manager/localized.svg"></a>
 
 如果您想帮助将 AB 下载管理器翻译成其他语言，或改进现有翻译，可以在 Crowdin 上进行。方法如下：
 

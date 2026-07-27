@@ -15,6 +15,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
+import kotlin.time.Duration.Companion.seconds
 
 abstract class DownloadJob(
     val downloadManager: DownloadManager,
@@ -57,7 +58,7 @@ abstract class DownloadJob(
         activeDownloadScope?.launch(Dispatchers.IO) {
             while (true) {
                 saveState()
-                delay(1000)
+                delay(1.seconds)
             }
         }
     }

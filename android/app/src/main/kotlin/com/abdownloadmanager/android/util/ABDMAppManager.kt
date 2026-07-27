@@ -21,6 +21,7 @@ import com.abdownloadmanager.shared.ui.widget.NotificationManager
 import com.abdownloadmanager.shared.ui.widget.NotificationType
 import com.abdownloadmanager.shared.util.DownloadSystem
 import com.abdownloadmanager.shared.util.category.CategorySelectionMode
+import com.abdownloadmanager.shared.util.keepawake.KeepAwakeManager
 import com.abdownloadmanager.shared.util.notification.platformNotificationSound
 import ir.amirab.downloader.DownloadManagerEvents
 import ir.amirab.downloader.NewDownloadItemProps
@@ -39,11 +40,14 @@ import kotlinx.coroutines.flow.*
 import org.koin.core.component.KoinComponent
 import java.util.*
 import kotlin.system.exitProcess
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 
 class ABDMAppManager(
     private val context: Context,
     private val scope: CoroutineScope,
     val downloadSystem: DownloadSystem,
+    val keepAwakeManager: KeepAwakeManager,
     val permissionManager: PermissionManager,
     val notificationManager: NotificationManager,
     val serviceNotificationManager: ABDMServiceNotificationManager,
@@ -76,6 +80,7 @@ class ABDMAppManager(
     suspend fun startDownloadSystem() {
         downloadSystemBooted.action {
             downloadSystem.boot()
+            keepAwakeManager.boot()
             registerReceivers()
             registerDownloadEventNotifications()
         }
@@ -426,7 +431,7 @@ class ABDMAppManager(
                     .flatMapLatest {
                         if (it == null) flow {
                             // let it be null for 10 seconds
-                            delay(10_000)
+                            delay(10.seconds)
                             emit(Unit)
                         }
                         else emptyFlow()

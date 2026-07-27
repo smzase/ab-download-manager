@@ -15,6 +15,20 @@ I welcome the following types of contributions:
 
 - **Pull Requests**: If you’d like to contribute code, feel free to submit a pull request. Just make sure to read the guidelines below before you start.
 
+## Bug Reports
+
+#### Before opening an issue:
+
+- Make sure you are using the [latest version](https://github.com/amir1376/ab-download-manager/releases/latest).
+- Search existing issues.
+- Include steps to reproduce the problem.
+- Include logs when applicable.
+
+#### After opening an issue:
+
+- If you find the cause of the issue, share it before closing the issue. Documenting solutions helps other users,
+  reduces duplicate reports, and saves everyone time.
+
 ## Translations
 
 If you’d like to help translate AB Download Manager into another language, or improve existing translations, you can do
@@ -41,3 +55,11 @@ If you're ready to contribute code, that's awesome! Before you start, here’s w
 - **Review & Feedback**: I’ll review your PR as soon as I can. There might be some feedback or requests for changes, so be ready to make adjustments if needed.
 
 - **Merging**: If everything looks good, I’ll merge your PR into the master branch.
+
+### Pull Request Requirements
+
+You are responsible for testing, debugging, and maintaining your pull request until it is merged.
+
+Vibe coding is not allowed. DO NOT submit AI-generated code and expect review cycles to shape it into a working implementation. If you submit a pull request, you must understand the code completely, verify that it works, and address issues yourself.
+
+Pull requests that primarily shift development, testing, or debugging work to reviewers may be closed without review.

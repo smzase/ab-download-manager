@@ -3,6 +3,7 @@ plugins {
 }
 repositories {
     mavenCentral()
+    maven("https://maven.aliyun.com/repository/google")
     google()
 }
 version = 1

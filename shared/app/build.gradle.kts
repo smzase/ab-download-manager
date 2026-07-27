@@ -3,18 +3,21 @@ import buildlogic.versioning.getAppName
 import buildlogic.versioning.getAppVersionString
 import buildlogic.versioning.getApplicationPackageName
 import buildlogic.versioning.getPrettifiedAppName
-import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+
 
 plugins {
     id(MyPlugins.kotlinMultiplatform)
     id(MyPlugins.composeBase)
     id(Plugins.Kotlin.serialization)
-    id(Plugins.Android.library)
+    id(Plugins.Android.multiplatformLibrary)
     id(Plugins.buildConfig)
 }
 kotlin {
     jvm("desktop")
-    androidTarget("android") {
+    android {
+        compileSdk = libs.versions.androidCompileSdk.get().toInt()
+        namespace = "com.abdownloadmanager.shared"
+        minSdk = 26
     }
     sourceSets {
         commonMain.dependencies {
@@ -64,13 +67,6 @@ kotlin {
     }
 }
 
-android {
-    compileSdk = 36
-    namespace = "com.abdownloadmanager.shared"
-    defaultConfig {
-        minSdk = 26
-    }
-}
 // generate a file with these constants
 buildConfig {
     packageName = "com.abdownloadmanager.shared"
@@ -142,6 +138,18 @@ buildConfig {
         "INTEGRATION_FIREFOX_LINK",
         provider {
             "https://addons.mozilla.org/en-US/firefox/addon/ab-download-manager/"
+        }
+    )
+    buildConfigField(
+        "INTEGRATION_FIREFOX_EXTENSION_ID",
+        provider {
+            "firefox-integration@abdownloadmanager.com"
+        }
+    )
+    buildConfigField(
+        "INTEGRATION_CHROME_EXTENSION_ID",
+        provider {
+            "chrome-extension://bbobopahenonfdgjgaleledndnnfhooj/"
         }
     )
     buildConfigField(

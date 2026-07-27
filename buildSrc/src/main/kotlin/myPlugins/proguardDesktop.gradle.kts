@@ -1,10 +1,10 @@
 package myPlugins
 
-import org.jetbrains.compose.desktop.application.tasks.AbstractProguardTask
+import dev.nucleusframework.desktop.application.tasks.AbstractProguardTask
 import java.util.zip.ZipFile
 
 plugins {
-    id("org.jetbrains.compose")
+    id("dev.nucleusframework")
 }
 
 fun getProguardFileContent(file: File): List<Pair<String, String>> {
@@ -36,7 +36,7 @@ $content
     return list
 }
 val compileClasspathProvider = configurations.named("compileClasspath")
-val getProguardConfigurations by tasks.registering {
+val getProguardConfigurations = tasks.register("getProguardConfigurations") {
     dependsOn(compileClasspathProvider)
     val folder = layout.buildDirectory.map {
         it.dir("resolvedProguards")

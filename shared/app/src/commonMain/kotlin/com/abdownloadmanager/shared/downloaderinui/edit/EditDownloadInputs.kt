@@ -15,6 +15,7 @@ import ir.amirab.util.compose.asStringSource
 import ir.amirab.util.flow.mapStateFlow
 import ir.amirab.util.flow.mapTwoWayStateFlow
 import ir.amirab.util.flow.onEachLatest
+import ir.amirab.util.toSingleLine
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -26,6 +27,7 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
+import kotlin.time.Duration.Companion.milliseconds
 
 typealias TAEditDownloadInputs = EditDownloadInputs<*, *, *, *, *, *>
 
@@ -72,7 +74,9 @@ abstract class EditDownloadInputs<
     abstract val configurableList: List<Configurable<*>>
     abstract fun applyEditedItemTo(item: TDownloadItem)
     fun setName(name: String) {
-        this.name.value = name
+        val refinedName = name
+            .toSingleLine()
+        this.name.value = refinedName
     }
 
     val link = credentials.mapTwoWayStateFlow(
@@ -141,13 +145,13 @@ abstract class EditDownloadInputs<
 
     init {
         merge(
-            scheduleRefreshResponseInfo.debounce(500),
+            scheduleRefreshResponseInfo.debounce(500.milliseconds),
             refreshResponseInfoImmediately
         ).onEachLatest {
             linkChecker.check()
         }.launchIn(scope)
         merge(
-            scheduleRecheckEditDownloadIsPossible.debounce(500),
+            scheduleRecheckEditDownloadIsPossible.debounce(500.milliseconds),
 //            ...
         ).onEachLatest {
             editDownloadChecker.check()

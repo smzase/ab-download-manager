@@ -67,18 +67,18 @@ import kotlinx.coroutines.withTimeout
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.get
 import org.koin.core.component.inject
+import kotlin.time.Duration.Companion.seconds
 
 object Ui : KoinComponent {
     val scope: CoroutineScope by inject()
+    val appComponent: AppComponent = get()
+    val themeManager: ThemeManager = get()
+    val fontManager: FontManager = get()
+    val languageManager: LanguageManager = get()
+    val notificationManager: NotificationManager = get()
     fun boot(
         appArguments: AppArguments,
-        globalAppExceptionHandler: GlobalAppExceptionHandler,
     ) {
-        val appComponent: AppComponent = get()
-        val themeManager: ThemeManager = get()
-        val fontManager: FontManager = get()
-        val languageManager: LanguageManager = get()
-        val notificationManager: NotificationManager = get()
         themeManager.boot()
         fontManager.boot()
         languageManager.boot()
@@ -97,6 +97,10 @@ object Ui : KoinComponent {
                 }
             )
         }
+    }
+    fun start(
+        globalAppExceptionHandler: GlobalAppExceptionHandler,
+    ) {
         application {
             ProvideLocalProviders(
                 languageManager = languageManager,
@@ -210,7 +214,7 @@ private fun HandleEffectsForApp(appComponent: AppComponent) {
         when (it) {
             is AppEffects.SimpleNotificationNotification -> {
                 scope.launch {
-                    withTimeout(5000) {
+                    withTimeout(5.seconds) {
                         notificationManager.showNotification(it.notificationModel)
                     }
                 }

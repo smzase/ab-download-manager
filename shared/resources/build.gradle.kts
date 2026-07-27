@@ -1,26 +1,25 @@
-import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import java.util.Properties
 
 plugins {
     id(MyPlugins.kotlinMultiplatform)
     id(MyPlugins.composeBase)
-    id(Plugins.Android.library)
+    id(Plugins.Android.multiplatformLibrary)
 }
 val ourPackageName = "com.abdownloadmanager.resources"
-val propertiesToKotlinTask by tasks.registering(PropertiesToKotlinTask::class) {
+val propertiesToKotlinTask = tasks.register("propertiesToKotlinTask", PropertiesToKotlinTask::class) {
     outputDir.set(file("build/tasks/propertiesToKotlinTask"))
     generatedFileName.set("String.kt")
     packageName.set(ourPackageName)
     myStringResourceClass.set("ir.amirab.resources.contracts.MyStringResource")
     propertyFiles.from("src/commonMain/resources/com/abdownloadmanager/resources/locales/en_US.properties")
 }
-val generateResourceMap by tasks.registering(GenerateResourceMap::class) {
+val generateResourceMap = tasks.register("generateResourceMap", GenerateResourceMap::class) {
     outputDir.set(file("build/tasks/generateResourceMapTask"))
     generatedFileName.set("ResourceMap.kt")
     packageName.set(ourPackageName)
     baseFolder.set(file("src/commonMain/resources/"))
 }
-val generateResObject by tasks.registering(GenerateResObject::class) {
+val generateResObject = tasks.register("generateResObject", GenerateResObject::class) {
     outputDir.set(file("build/tasks/generateResObjectTask"))
     generatedFileName.set("Res.kt")
     packageName.set(ourPackageName)
@@ -30,9 +29,15 @@ val generateResObject by tasks.registering(GenerateResObject::class) {
 
 kotlin {
     jvm("desktop")
-    androidTarget {
+    android {
+        compileSdk = libs.versions.androidCompileSdk.get().toInt()
+        namespace = "com.abdownloadmanager.resources"
+        minSdk = 26
     }
     sourceSets {
+        androidMain {
+            resources.srcDir("src/commonMain/resources")
+        }
         commonMain {
             kotlin {
                 srcDirs(propertiesToKotlinTask.map { it.outputDir })
@@ -45,16 +50,6 @@ kotlin {
                 implementation(project(":shared:resources:contracts"))
             }
         }
-    }
-}
-android {
-    compileSdk = 36
-    namespace = "com.abdownloadmanager.resources"
-    defaultConfig {
-        minSdk = 26
-    }
-    sourceSets.named("main") {
-        resources.srcDir("src/commonMain/resources")
     }
 }
 abstract class GenerateResObject @Inject constructor(

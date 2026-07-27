@@ -3,7 +3,7 @@ import ir.amirab.util.platform.Platform
 object MyPlugins {
     private const val namespace = "myPlugins"
     const val kotlin = "$namespace.kotlin"
-    const val kotlinAndroid = "$namespace.kotlinAndroid"
+    const val androidBase = "$namespace.androidBase"
     const val kotlinMultiplatform = "$namespace.kotlinMultiplatform"
     const val composeAndroid = "$namespace.composeAndroid"
     const val composeDesktop = "$namespace.composeDesktop"
@@ -23,9 +23,11 @@ object Plugins {
         private const val baseName = "com.android"
         const val application = "$baseName.application"
         const val library = "$baseName.library"
+        const val multiplatformLibrary = "$baseName.kotlin.multiplatform.library"
     }
 
     const val ksp = "com.google.devtools.ksp"
+    const val kotlinRpc = "org.jetbrains.kotlinx.rpc.plugin"
     const val compose = "org.jetbrains.compose"
     const val composeCompiler = "org.jetbrains.kotlin.plugin.compose"
     const val changeLog = "org.jetbrains.changelog"

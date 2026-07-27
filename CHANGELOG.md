@@ -14,6 +14,59 @@
 
 ### Security
 
+## 1.10.1
+
+### Changed
+
+- Disabled the AOT Cache
+
+## 1.10.0
+
+### Added
+
+- Native Messaging support, allowing the browser to launch the app if it's not already running
+- Command-line interface (CLI)
+- Support for API key authentication (#1335)
+
+### Improved
+
+- Faster app startup using the AOT cache (#1333)
+- Updated translations
+- Improved the speed limiter behavior (#1315)
+
+## 1.9.2
+
+### Added
+
+- New Twilight theme (#1292)
+- Optional download completion notifications on Android (#1290)
+
+### Fixed
+
+- Fixed a crash on some older CPUs on Windows
+- Fixed oversized system tray icon on macOS
+
+### Improved
+
+- Updated translations
+- Prevented Android devices from sleeping while downloads are active (#1291)
+- Various UI and UX improvements
+
+## 1.9.1
+
+### Added
+
+- An option to customize notification sounds (#1259)
+
+### Fixed
+
+- Ongoing notification was laggy on Samsung One UI devices (#1269)
+
+### Improved
+
+- Updated Translations
+- Minor UI/UX improvements
+
 ## 1.9.0
 
 ### Added
