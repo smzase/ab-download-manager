@@ -29,6 +29,7 @@ class OkHttpHttpDownloaderClient(
         }
         return okHttpClient
             .applyProxy(downloadCredentials)
+            .withAntiLeechRetry()
             .newCall(
                 Request.Builder()
                     .url(downloadCredentials.link)
@@ -182,6 +183,48 @@ class OkHttpHttpDownloaderClient(
                     .build()
             }
         }
+    }
+
+    /**
+     * Anti-leech (防盗链) retry interceptor.
+     *
+     * Some download gateways (e.g. touchgaldownload.xyz behind Cloudflare) reject
+     * requests whose Referer is not in their whitelist, returning 403 Access Denied.
+     * When the gateway also sends an `Access-Control-Allow-Origin` header (which
+     * reveals the expected origin), we automatically retry the request with that
+     * origin as the Referer.
+     *
+     * This complements the explicit Referer logic in [newCall] (which uses
+     * downloadPage or URL origin). When the explicit Referer is wrong, this
+     * interceptor recovers automatically by learning the correct origin from the
+     * 403 response itself.
+     *
+     * The retry runs at most once: the retried request already carries
+     * `Referer == allowOrigin`, so the `currentReferer != allowOrigin` guard
+     * prevents a second retry.
+     */
+    private fun OkHttpClient.withAntiLeechRetry(): OkHttpClient {
+        return newBuilder()
+            .addInterceptor { chain ->
+                val request = chain.request()
+                val response = chain.proceed(request)
+                if (response.code == 403) {
+                    val allowOrigin = response.header("Access-Control-Allow-Origin")
+                    val currentReferer = request.header("Referer")
+                    if (!allowOrigin.isNullOrBlank()
+                        && allowOrigin != "*"
+                        && currentReferer != allowOrigin
+                    ) {
+                        response.close()
+                        val retryRequest = request.newBuilder()
+                            .header("Referer", allowOrigin)
+                            .build()
+                        return@addInterceptor chain.proceed(retryRequest)
+                    }
+                }
+                response
+            }
+            .build()
     }
 
 
