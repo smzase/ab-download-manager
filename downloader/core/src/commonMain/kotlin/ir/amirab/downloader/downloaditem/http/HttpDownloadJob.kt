@@ -15,6 +15,7 @@ import ir.amirab.downloader.exception.PrepareDestinationFailedException
 import ir.amirab.downloader.exception.FileChangedException
 import ir.amirab.downloader.exception.ServerResumeSupportChangeException
 import ir.amirab.downloader.exception.TooManyErrorException
+import ir.amirab.downloader.exception.UnSuccessfulResponseException
 import ir.amirab.downloader.part.*
 import ir.amirab.downloader.utils.*
 import ir.amirab.downloader.utils.speedlimiter.SpeedLimiter
@@ -100,6 +101,19 @@ class HttpDownloadJob(
     @Volatile
     private var strictDownload = true
 
+    /**
+     * Set to true after we automatically fall back to single-connection mode
+     * due to HTTP 429 (Too Many Requests). Prevents infinite fallback loops.
+     * Some servers block multi-threaded download tools; when we detect a 429
+     * we retry with a single connection.
+     */
+    @Volatile
+    private var hasFallbackToSingleConnectionOn429: Boolean = false
+
+    private fun isTooManyRequests(e: Throwable): Boolean {
+        return e is UnSuccessfulResponseException && e.code == 429
+    }
+
     fun expectValid(size: Long, parts: List<LongRange>) {
         val parts = parts.sortedBy { it.first }
         require(parts.first().first == 0L)
@@ -121,6 +135,7 @@ class HttpDownloadJob(
         downloadItem.startTime = null
         downloadItem.completeTime = null
         strictDownload = true
+        hasFallbackToSingleConnectionOn429 = false
         downloadedSizeBeforeRetry = 0 // nothing
         saveState()
         downloadManager.onDownloadItemChange(downloadItem)
@@ -478,6 +493,19 @@ class HttpDownloadJob(
     ) {
         //moving to the main scope and request to cancel activeDownload scope!
         scope.launch {
+            // Handle 429 Too Many Requests:
+            // Some servers (e.g. file hosting gateways) block multi-threaded
+            // download tools. When we detect a 429 and are using more than one
+            // connection, automatically fall back to single-connection mode
+            // and retry. This only happens once per download job.
+            if (isTooManyRequests(e)
+                && !hasFallbackToSingleConnectionOn429
+                && getRequestedPartitionCount() > 1
+            ) {
+                hasFallbackToSingleConnectionOn429 = true
+                fallbackToSingleConnectionAndRetry()
+                return@launch
+            }
             if (isInFirstResume && failedDownloadTries == 0 && shouldRetryIfInitialFailed()) {
                 if (ExceptionUtils.isNetworkError(e) || ExceptionUtils.isResponseError(e)) {
                     pause(e)
@@ -530,6 +558,34 @@ class HttpDownloadJob(
 
     fun shouldRetryIfInitialFailed(): Boolean {
         return true
+    }
+
+    /**
+     * Fall back to single-connection mode after a 429 (Too Many Requests).
+     *
+     * Clears existing parts so they get recreated as a single part, sets
+     * [downloadItem.preferredConnectionCount] to 1, and retries the download.
+     * Even if the server reports resume support (206), [getRequestedPartitionCount]
+     * returns 1 so only one connection is opened.
+     */
+    private suspend fun fallbackToSingleConnectionAndRetry() {
+        cancelDownloadScope()
+        stopAllParts()
+        clearPartDownloaderList()
+        setParts(emptyList())
+        downloadItem.preferredConnectionCount = 1
+        downloadItem.contentLength = IDownloadItem.LENGTH_UNKNOWN
+        downloadItem.serverETag = null
+        failedDownloadTries = 0
+        downloadedSizeBeforeRetry = 0
+        saveState()
+        downloadManager.onDownloadItemChange(downloadItem)
+
+        _status.update { DownloadJobStatus.Retrying(delayForEachRetry) }
+        delay(delayForEachRetry.milliseconds)
+
+        val newScope = createAndInitializeDownloadScope()
+        resumeWithNewScope(newScope, isInFirstResume = false)
     }
 
 
