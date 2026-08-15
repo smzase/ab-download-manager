@@ -3,6 +3,7 @@ package ir.amirab.downloader.connection.response
 import ir.amirab.downloader.connection.IResponseInfo
 import ir.amirab.downloader.connection.response.headers.getContentRange
 import ir.amirab.downloader.connection.response.headers.extractFileNameFromContentDisposition
+import ir.amirab.downloader.exception.CloudflareChallengeException
 import ir.amirab.downloader.exception.UnSuccessfulResponseException
 import ir.amirab.downloader.utils.FileNameUtil
 import ir.amirab.downloader.utils.throwIf
@@ -57,6 +58,10 @@ data class HttpResponseInfo(
         responseHeaders["content-type"].orEmpty().contains("text/html", ignoreCase = true)
     }
 
+    val isCloudflareChallenge: Boolean by lazy {
+        responseHeaders["cf-mitigated"].equals("challenge", ignoreCase = true)
+    }
+
     val fileName: String? by lazy {
         val detectedName = run {
             val nameFromHeader = responseHeaders["content-disposition"]?.let {
@@ -87,7 +92,11 @@ data class HttpResponseInfo(
 
     override val unsuccessFullException: Throwable? by lazy {
         if (!isSuccessFul) {
-            UnSuccessfulResponseException(statusCode, message)
+            if (isCloudflareChallenge) {
+                CloudflareChallengeException(statusCode, message)
+            } else {
+                UnSuccessfulResponseException(statusCode, message)
+            }
         } else {
             null
         }

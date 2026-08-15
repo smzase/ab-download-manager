@@ -202,25 +202,23 @@ class OkHttpHttpDownloaderClient(
      * The retry runs at most once: the retried request already carries
      * `Referer == allowOrigin`, so the `currentReferer != allowOrigin` guard
      * prevents a second retry.
+     *
+     * Interactive Cloudflare challenges are marked with `Cf-Mitigated: challenge`.
+     * They cannot be solved by changing Referer, so they are left untouched for
+     * the response layer to report with an actionable error.
      */
     private fun OkHttpClient.withAntiLeechRetry(): OkHttpClient {
         return newBuilder()
             .addInterceptor { chain ->
                 val request = chain.request()
                 val response = chain.proceed(request)
-                if (response.code == 403) {
-                    val allowOrigin = response.header("Access-Control-Allow-Origin")
-                    val currentReferer = request.header("Referer")
-                    if (!allowOrigin.isNullOrBlank()
-                        && allowOrigin != "*"
-                        && currentReferer != allowOrigin
-                    ) {
-                        response.close()
-                        val retryRequest = request.newBuilder()
-                            .header("Referer", allowOrigin)
-                            .build()
-                        return@addInterceptor chain.proceed(retryRequest)
-                    }
+                val retryReferer = getAntiLeechRetryReferer(request, response)
+                if (retryReferer != null) {
+                    response.close()
+                    val retryRequest = request.newBuilder()
+                        .header("Referer", retryReferer)
+                        .build()
+                    return@addInterceptor chain.proceed(retryRequest)
                 }
                 response
             }
@@ -291,4 +289,17 @@ class OkHttpHttpDownloaderClient(
             responseInfo = createFileInfo(response)
         )
     }
+}
+
+internal fun getAntiLeechRetryReferer(
+    request: Request,
+    response: Response,
+): String? {
+    if (response.code != 403) return null
+    if (response.header("Cf-Mitigated").equals("challenge", ignoreCase = true)) return null
+
+    val allowOrigin = response.header("Access-Control-Allow-Origin")
+        ?.takeIf { it.isNotBlank() && it != "*" }
+        ?: return null
+    return allowOrigin.takeIf { request.header("Referer") != it }
 }

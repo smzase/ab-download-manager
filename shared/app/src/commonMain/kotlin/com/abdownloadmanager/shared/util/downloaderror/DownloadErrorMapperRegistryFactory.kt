@@ -5,6 +5,7 @@ import com.abdownloadmanager.shared.util.downloaderror.definederrors.*
 class DownloadErrorMapperRegistryFactory {
     private fun getAvailableMappers(): List<DownloadErrorMapper> {
         return listOf(
+            CloudflareChallengeDownloadErrorMapper,
             HttpStatusDownloadErrorMapper,
             UnknownHostErrorMapper,
             ChangedToWebPageDownloadErrorMapper,
