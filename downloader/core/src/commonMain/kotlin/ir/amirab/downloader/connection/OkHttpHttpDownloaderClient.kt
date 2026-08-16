@@ -1,5 +1,6 @@
 package ir.amirab.downloader.connection
 
+import ir.amirab.downloader.connection.clearance.ClearanceProvider
 import ir.amirab.downloader.connection.proxy.*
 import ir.amirab.downloader.connection.response.HttpResponseInfo
 import ir.amirab.downloader.downloaditem.http.IHttpBasedDownloadCredentials
@@ -17,6 +18,7 @@ class OkHttpHttpDownloaderClient(
     private val proxyStrategyProvider: ProxyStrategyProvider,
     private val systemProxySelectorProvider: SystemProxySelectorProvider,
     private val autoConfigurableProxyProvider: AutoConfigurableProxyProvider,
+    private val clearanceProvider: ClearanceProvider = ClearanceProvider.NoOp(),
 ) : HttpDownloaderClient() {
     private fun newCall(
         downloadCredentials: IHttpBasedDownloadCredentials,
@@ -34,15 +36,39 @@ class OkHttpHttpDownloaderClient(
                 Request.Builder()
                     .url(downloadCredentials.link)
                     .apply {
+                        val clearance = clearanceProvider
+                            .getClearanceFor(downloadCredentials.link)
+                            ?.takeUnless { it.isExpired() }
+                        val credentialsReferer = downloadCredentials.headers
+                            ?.entries
+                            ?.firstOrNull { it.key.equals("Referer", true) }
+                            ?.value
+                        val credentialsUserAgent = downloadCredentials.userAgent
+                            ?: downloadCredentials.headers
+                                ?.entries
+                                ?.firstOrNull { it.key.equals("User-Agent", true) }
+                                ?.value
+                        // Referer: the explicit one, else downloadPage, else the download URL origin.
+                        // Many download gateways use Referer-based anti-leech protection;
+                        // without it they return 403 Access Denied.
+                        val effectiveReferer = credentialsReferer
+                            ?: downloadCredentials.downloadPage?.takeIf { it.isNotBlank() }
+                            ?: downloadCredentials.link.toHttpUrlOrNull()
+                                ?.let { "${it.scheme}://${it.host}/" }
+                        // a clearance is bound to the User-Agent that solved the challenge,
+                        // so it takes precedence over the configured/default one
+                        val effectiveUserAgent = clearance?.userAgent
+                            ?: credentialsUserAgent
+                            ?: customUserAgentProvider.getUserAgent()
+                            ?: getDefaultUserAgent()
+
                         defaultHeadersInFirst().forEach { (k, v) ->
                             header(k, v)
                         }
                         // we don't to add something that we sure that it will be overridden later
                         if (downloadCredentials.userAgent == null) {
                             // only add default user agent if we don't specify it
-                            val customUserAgent = customUserAgentProvider.getUserAgent()
-                                ?: getDefaultUserAgent()
-                            header("User-Agent", customUserAgent)
+                            header("User-Agent", effectiveUserAgent)
                         }
                         downloadCredentials.headers
                             ?.filter {
@@ -53,18 +79,16 @@ class OkHttpHttpDownloaderClient(
                             ?.forEach { (k, v) ->
                                 header(k, v)
                             }
-                        // Add Referer header: use downloadPage if available,
-                        // otherwise derive from download URL origin.
-                        // Many download gateways use Referer-based anti-leech protection;
-                        // without it they return 403 Access Denied.
-                        val hasReferer = downloadCredentials.headers
-                            ?.keys?.any { it.equals("Referer", true) } == true
-                        if (!hasReferer) {
-                            val referer = downloadCredentials.downloadPage
-                                ?.takeIf { it.isNotBlank() }
-                                ?: downloadCredentials.link.toHttpUrlOrNull()
-                                    ?.let { "${it.scheme}://${it.host}/" }
-                            referer?.let { header("Referer", it) }
+                        // Merge the clearance cookie with any per-download Cookie header instead of
+                        // replacing it, so an explicitly configured cookie and the challenge cookie
+                        // can coexist. Note we deliberately don't install an OkHttp CookieJar here:
+                        // a non-empty jar makes BridgeInterceptor overwrite the Cookie header we set,
+                        // silently dropping downloadCredentials.headers["Cookie"].
+                        clearance?.let {
+                            header("Cookie", mergeCookies(downloadCredentials.headers, it.cookie))
+                        }
+                        if (credentialsReferer == null) {
+                            effectiveReferer?.let { header("Referer", it) }
                         }
                         defaultHeadersInLast().forEach { (k, v) ->
                             header(k, v)
@@ -74,9 +98,7 @@ class OkHttpHttpDownloaderClient(
                         if (username?.isNotBlank() == true && password?.isNotBlank() == true) {
                             header("Authorization", Credentials.basic(username, password))
                         }
-                        downloadCredentials.userAgent?.let { userAgent ->
-                            header("User-Agent", userAgent)
-                        }
+                        header("User-Agent", effectiveUserAgent)
                     }
                     .apply(extraBuilder)
                     .apply {
@@ -302,4 +324,45 @@ internal fun getAntiLeechRetryReferer(
         ?.takeIf { it.isNotBlank() && it != "*" }
         ?: return null
     return allowOrigin.takeIf { request.header("Referer") != it }
+}
+
+/**
+ * Combines an explicitly configured `Cookie` header with a clearance cookie.
+ *
+ * Cookies the clearance defines replace same-named ones from [headers] rather than being
+ * appended after them: a stale `cf_clearance` may well be sitting in the per-download
+ * headers, and servers typically honour the *first* occurrence of a duplicated cookie
+ * name, which would shadow the freshly obtained one.
+ *
+ * Raw segments are preserved verbatim so values that themselves contain `=`
+ * (base64, as `cf_clearance` is) are never mangled.
+ */
+internal fun mergeCookies(
+    headers: Map<String, String>?,
+    clearanceCookie: String,
+): String {
+    val existing = headers
+        ?.entries
+        ?.firstOrNull { it.key.equals("Cookie", ignoreCase = true) }
+        ?.value
+        ?.takeIf { it.isNotBlank() }
+        ?: return clearanceCookie
+    val clearanceNames = clearanceCookie.splitCookieSegments()
+        .map { it.cookieName() }
+        .filter { it.isNotEmpty() }
+        .toSet()
+    val kept = existing.splitCookieSegments()
+        .filterNot { it.cookieName() in clearanceNames }
+    return (kept + clearanceCookie).joinToString("; ")
+}
+
+private fun String.splitCookieSegments(): List<String> {
+    return split(';')
+        .map { it.trim() }
+        .filter { it.isNotEmpty() }
+}
+
+/** cookie names are case sensitive, so this is compared exactly */
+private fun String.cookieName(): String {
+    return substringBefore('=').trim()
 }

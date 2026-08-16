@@ -10,6 +10,7 @@ import ir.amirab.downloader.downloaditem.DownloadJobExtraConfig
 import ir.amirab.downloader.downloaditem.DownloadJobStatus
 import ir.amirab.downloader.downloaditem.DownloadStatus
 import ir.amirab.downloader.downloaditem.IDownloadItem
+import ir.amirab.downloader.exception.CloudflareChallengeException
 import ir.amirab.downloader.exception.DownloadValidationException
 import ir.amirab.downloader.exception.PrepareDestinationFailedException
 import ir.amirab.downloader.exception.FileChangedException
@@ -27,6 +28,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.time.Duration.Companion.milliseconds
 
 
@@ -114,6 +116,18 @@ class HttpDownloadJob(
         return e is UnSuccessfulResponseException && e.code == 429
     }
 
+    /**
+     * Set to true once we've asked the user to solve an interactive Cloudflare challenge
+     * for this download. Prevents prompting in a loop when the obtained clearance doesn't
+     * actually get us through — which happens for instance when the proxy hands out a
+     * different exit IP than the one the challenge was solved on, since Cloudflare binds
+     * the clearance to the IP.
+     */
+    private val hasTriedToSolveChallenge = AtomicBoolean(false)
+
+    @Volatile
+    private var challengeSolverJob: Job? = null
+
     fun expectValid(size: Long, parts: List<LongRange>) {
         val parts = parts.sortedBy { it.first }
         require(parts.first().first == 0L)
@@ -136,6 +150,7 @@ class HttpDownloadJob(
         downloadItem.completeTime = null
         strictDownload = true
         hasFallbackToSingleConnectionOn429 = false
+        hasTriedToSolveChallenge.set(false)
         downloadedSizeBeforeRetry = 0 // nothing
         saveState()
         downloadManager.onDownloadItemChange(downloadItem)
@@ -146,6 +161,9 @@ class HttpDownloadJob(
         if (isDownloadActive.value) {
             return
         }
+        // A manual resume starts a new interaction attempt. Automatic retries call
+        // resumeWithNewScope directly, so they cannot open the browser in a loop.
+        hasTriedToSolveChallenge.set(false)
         _isDownloadActive.update { true }
         resumeWithNewScope(
             newActiveScope = createAndInitializeDownloadScope(),
@@ -493,6 +511,43 @@ class HttpDownloadJob(
     ) {
         //moving to the main scope and request to cancel activeDownload scope!
         scope.launch {
+            // Handle an interactive Cloudflare challenge:
+            // the configured HTTP backends could not satisfy it, so hand it to the platform layer, which
+            // shows the user a real browser. Once they're through, the captured cf_clearance
+            // cookie is picked up by the ClearanceProvider on the next request, so retrying
+            // is all that's needed. Checked before the response-error handling below, which
+            // would otherwise just pause the download.
+            if (e is CloudflareChallengeException) {
+                // Another part can fail with the same challenge while the first part is
+                // waiting for the user. That first handler owns the outcome; a later one
+                // must not pause the job underneath the browser window.
+                if (!hasTriedToSolveChallenge.compareAndSet(false, true)) {
+                    return@launch
+                }
+                val currentJob = currentCoroutineContext().job
+                challengeSolverJob = currentJob
+                // a solver blowing up (missing browser runtime, closed window, ...) must not
+                // take the download job's scope down with it, we just fall through to the
+                // normal error handling below and report the challenge to the user
+                val solved = try {
+                    runCatching {
+                        downloadManager.challengeSolver.solve(downloadItem.link)
+                    }.onFailure {
+                        it.throwIfCancelled()
+                    }.getOrDefault(false)
+                } finally {
+                    if (challengeSolverJob === currentJob) {
+                        challengeSolverJob = null
+                    }
+                }
+                if (solved) {
+                    // the user did real work to get here, don't let an earlier
+                    // tally of failures immediately exhaust the retry budget
+                    failedDownloadTries = 0
+                    retry(isInFirstResume)
+                    return@launch
+                }
+            }
             // Handle 429 Too Many Requests:
             // Some servers (e.g. file hosting gateways) block multi-threaded
             // download tools. When we detect a 429 and are using more than one
@@ -762,6 +817,19 @@ class HttpDownloadJob(
         retryJob = null
     }
 
+    private suspend fun cancelChallengeSolver() {
+        val solverJob = challengeSolverJob ?: return
+        // When the solver itself decides that verification failed, it falls through to
+        // pause(). Cancelling the currently executing job here would abort pause halfway.
+        if (solverJob === currentCoroutineContext().job) {
+            return
+        }
+        solverJob.cancelAndJoin()
+        if (challengeSolverJob === solverJob) {
+            challengeSolverJob = null
+        }
+    }
+
     suspend fun stopAllParts() {
         withContext(Dispatchers.IO) {
             partDownloaderList.values.onEach {
@@ -785,6 +853,7 @@ class HttpDownloadJob(
         boot()
         failedDownloadTries = 0
         cancelRetry()
+        cancelChallengeSolver()
         cancelDownloadScope()
         stopAllParts()
         onDownloadCanceled(throwable)
@@ -794,6 +863,7 @@ class HttpDownloadJob(
         boot()
         failedDownloadTries = 0
         cancelRetry()
+        cancelChallengeSolver()
         cancelDownloadScopeNow()
         stopAllPartsImmediately()
         _status.update { DownloadJobStatus.Canceled(throwable) }

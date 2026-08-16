@@ -32,6 +32,7 @@ import com.abdownloadmanager.desktop.utils.proxy.AutoConfigurableProxyProviderFo
 import com.abdownloadmanager.desktop.utils.proxy.DesktopSystemProxySelectorProvider
 import com.abdownloadmanager.desktop.utils.proxy.ProxyCachingConfig
 import com.abdownloadmanager.desktop.utils.renderapi.CustomRenderApi
+import com.abdownloadmanager.desktop.utils.clearance.ChromiumChallengeSolver
 import com.abdownloadmanager.integration.model.HLSDownloadCredentialsFromIntegration
 import com.abdownloadmanager.integration.model.HttpDownloadCredentialsFromIntegration
 import com.abdownloadmanager.integration.model.IDownloadCredentialsFromIntegration
@@ -41,6 +42,12 @@ import ir.amirab.downloader.DownloadManagerMinimalControl
 import ir.amirab.downloader.DownloadSettings
 import ir.amirab.downloader.connection.HttpDownloaderClient
 import ir.amirab.downloader.connection.OkHttpHttpDownloaderClient
+import ir.amirab.downloader.connection.CloudflareFallbackHttpDownloaderClient
+import ir.amirab.downloader.connection.CurlHttpDownloaderClient
+import ir.amirab.downloader.connection.ExternalProxyResolver
+import ir.amirab.downloader.connection.clearance.ChallengeSolver
+import ir.amirab.downloader.connection.clearance.ClearanceProvider
+import ir.amirab.downloader.connection.clearance.ClearanceStore
 import ir.amirab.downloader.db.*
 import ir.amirab.downloader.monitor.DownloadMonitor
 import ir.amirab.downloader.utils.IDiskStat
@@ -202,13 +209,45 @@ val downloaderModule = module {
     single<UserAgentProvider> {
         UserAgentProviderFromSettings(get())
     }
+    single {
+        ClearanceStore()
+    }
+    single<ClearanceProvider> {
+        get<ClearanceStore>()
+    }
+    single {
+        ExternalProxyResolver(
+            get(),
+            get(),
+            get(),
+        )
+    }
+    single<ChallengeSolver> {
+        ChromiumChallengeSolver(
+            clearanceStore = get(),
+            proxyResolver = get(),
+            okHttpClient = get(),
+            definedPaths = get(),
+        )
+    }
     single<HttpDownloaderClient> {
-        OkHttpHttpDownloaderClient(
-            get(),
-            get(),
-            get(),
-            get(),
-            get(),
+        val clearanceProvider: ClearanceProvider = get()
+        val primary = OkHttpHttpDownloaderClient(
+            okHttpClient = get(),
+            customUserAgentProvider = get(),
+            proxyStrategyProvider = get(),
+            systemProxySelectorProvider = get(),
+            autoConfigurableProxyProvider = get(),
+            clearanceProvider = clearanceProvider,
+        )
+        val curl = CurlHttpDownloaderClient(
+            customUserAgentProvider = get(),
+            proxyResolver = get(),
+            clearanceProvider = clearanceProvider,
+        )
+        CloudflareFallbackHttpDownloaderClient(
+            primary = primary,
+            fallback = curl,
         )
     }
     single {
@@ -252,7 +291,8 @@ val downloaderModule = module {
             get(),
             get<DownloadFoldersRegistry>().registerAndGet(
                 definedPaths.downloadDataDir
-            )
+            ),
+            challengeSolver = get(),
         )
     }.bind(DownloadManagerMinimalControl::class)
     single {

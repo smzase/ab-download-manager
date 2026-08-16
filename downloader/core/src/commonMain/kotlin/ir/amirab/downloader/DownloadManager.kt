@@ -1,6 +1,7 @@
 package ir.amirab.downloader
 
 import arrow.core.Some
+import ir.amirab.downloader.connection.clearance.ChallengeSolver
 import ir.amirab.downloader.db.IDownloadListDb
 import ir.amirab.downloader.db.IDownloadPartListDb
 import ir.amirab.downloader.downloaditem.*
@@ -33,7 +34,12 @@ class DownloadManager(
     val settings: DownloadSettings,
     val emptyFileCreator: EmptyFileCreator,
     private val downloaderRegistry: DownloaderRegistry,
-    val downloadDataFolder: File
+    val downloadDataFolder: File,
+    /**
+     * used by download jobs to recover from an interactive Cloudflare challenge,
+     * [ChallengeSolver.NoOp] where no browser is available to solve one
+     */
+    val challengeSolver: ChallengeSolver = ChallengeSolver.NoOp(),
 ) : DownloadManagerMinimalControl {
 
     val scope = CoroutineScope(SupervisorJob())
