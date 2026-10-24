@@ -90,7 +90,7 @@ object ProxyConfigurableRenderer : ConfigurableRenderer<ProxyConfigurable> {
         ConfigTemplate(
             modifier = configurableUiProps.modifier.padding(configurableUiProps.itemPaddingValues),
             title = {
-                TitleAndDescription(cfg, true)
+                TitleAndDescription(cfg)
             },
             value = {
                 RenderChangeProxyConfig(

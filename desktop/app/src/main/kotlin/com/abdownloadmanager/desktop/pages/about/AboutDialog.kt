@@ -2,15 +2,18 @@ package com.abdownloadmanager.desktop.pages.about
 
 import com.abdownloadmanager.desktop.AppComponent
 import com.abdownloadmanager.desktop.window.custom.CustomWindow
-import com.abdownloadmanager.desktop.window.custom.WindowTitle
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.WindowPosition
-import androidx.compose.ui.window.rememberWindowState
+import androidx.compose.ui.window.v2.WindowBoundsProvider
+import androidx.compose.ui.window.v2.WindowPositionProvider
+import androidx.compose.ui.window.v2.WindowSizeProvider
+import androidx.compose.ui.window.v2.rememberWindowState
 import com.abdownloadmanager.desktop.window.custom.WindowIcon
+import com.abdownloadmanager.desktop.window.custom.rememberWindowController
 import com.abdownloadmanager.shared.util.ui.icon.MyIcons
 import com.abdownloadmanager.shared.util.ui.theme.LocalUiScale
 import com.abdownloadmanager.resources.Res
@@ -46,13 +49,19 @@ fun AboutDialog(
         alwaysOnTop = false,
         onRequestMinimize = null,
         state = rememberWindowState(
-            position = WindowPosition.Aligned(Alignment.Center),
-            size = DpSize(600.dp, 310.dp)
-                .applyUiScale(LocalUiScale.current)
+            initialBoundsProvider = WindowBoundsProvider(
+                sizeProvider = WindowSizeProvider.Fixed(
+                    DpSize(600.dp, 310.dp)
+                        .applyUiScale(LocalUiScale.current)
+                ),
+                positionProvider = WindowPositionProvider.CenteredOnScreen
+            ),
         ),
-        onCloseRequest = onClose
+        onCloseRequest = onClose,
+        windowController = rememberWindowController(
+            title = myStringResource(Res.string.about),
+        ),
     ) {
-        WindowTitle(myStringResource(Res.string.about))
         WindowIcon(MyIcons.info)
         AboutPage(
             onRequestShowOpenSourceLibraries = onRequestShowOpenSourceLibraries,

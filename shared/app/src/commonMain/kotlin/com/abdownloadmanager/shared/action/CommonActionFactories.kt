@@ -4,6 +4,9 @@ import com.abdownloadmanager.resources.Res
 import com.abdownloadmanager.shared.pagemanager.*
 import com.abdownloadmanager.shared.pages.adddownload.AddDownloadCredentialsInUiProps
 import com.abdownloadmanager.shared.pages.updater.UpdateComponent
+import com.abdownloadmanager.shared.repository.BaseAppRepository
+import com.abdownloadmanager.shared.storage.SpeedLimitMode
+import com.abdownloadmanager.shared.storage.asShortStringSource
 import com.abdownloadmanager.shared.util.ClipboardUtil
 import com.abdownloadmanager.shared.util.DownloadSystem
 import com.abdownloadmanager.shared.util.SharedConstants
@@ -14,12 +17,15 @@ import ir.amirab.downloader.queue.DownloadQueue
 import ir.amirab.downloader.queue.QueueManager
 import ir.amirab.downloader.queue.inactiveQueuesFlow
 import ir.amirab.util.URLOpener
+import ir.amirab.util.compose.action.AToggleableAction
 import ir.amirab.util.compose.action.AnAction
 import ir.amirab.util.compose.action.MenuItem
 import ir.amirab.util.compose.action.buildMenu
 import ir.amirab.util.compose.action.simpleAction
+import ir.amirab.util.compose.action.toggleableAction
 import ir.amirab.util.compose.asStringSource
 import ir.amirab.util.flow.combineStateFlows
+import ir.amirab.util.flow.mapStateFlow
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -138,6 +144,31 @@ fun createPerHostSettingsPage(
     }
 }
 
+fun createSpeedLimitGroupAction(
+    appRepository: BaseAppRepository
+): MenuItem.SubMenu {
+    return MenuItem.SubMenu(
+        title = Res.string.settings_global_speed_limiter.asStringSource(),
+        items = SpeedLimitMode.entries.map {
+            createUseSpeedLimiterAction(appRepository, it)
+        }
+    )
+}
+
+fun createUseSpeedLimiterAction(
+    appRepository: BaseAppRepository,
+    target: SpeedLimitMode,
+): AToggleableAction {
+    return toggleableAction(
+        target.asShortStringSource(),
+        MyIcons.speed,
+        isToggled = appRepository.speedLimitMode.mapStateFlow {
+            it == target
+        }
+    ) {
+        appRepository.speedLimitMode.value = target
+    }
+}
 
 fun createOpenSettingsAction(
     settingsPageManager: SettingsPageManager

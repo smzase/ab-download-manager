@@ -21,11 +21,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.WindowPosition
-import androidx.compose.ui.window.rememberWindowState
+import androidx.compose.ui.window.v2.WindowBoundsProvider
+import androidx.compose.ui.window.v2.WindowPositionProvider
+import androidx.compose.ui.window.v2.WindowSizeProvider
+import androidx.compose.ui.window.v2.rememberWindowState
 import com.abdownloadmanager.desktop.AppComponent
 import com.abdownloadmanager.desktop.window.custom.CustomWindow
-import com.abdownloadmanager.desktop.window.custom.WindowTitle
+import com.abdownloadmanager.desktop.window.custom.rememberWindowController
 import com.abdownloadmanager.resources.Res
 import com.abdownloadmanager.shared.ui.widget.ActionButton
 import com.abdownloadmanager.shared.ui.widget.LoadingIndicatorWithBrush
@@ -50,13 +52,16 @@ fun PowerActionAlert(appComponent: AppComponent) {
 private fun PowerActionAlertWindow(
     component: PowerActionComponent
 ) {
-    val uiScale = LocalUiScale.current
     val windowState = rememberWindowState(
-        position = WindowPosition.Aligned(Alignment.Center),
-        size = DpSize(
-            width = 450.dp,
-            height = 200.dp,
-        ).applyUiScale(uiScale),
+        initialBoundsProvider = WindowBoundsProvider(
+            sizeProvider = WindowSizeProvider.Fixed(
+                size = DpSize(
+                    width = 450.dp,
+                    height = 200.dp,
+                ).applyUiScale(LocalUiScale.current)
+            ),
+            positionProvider = WindowPositionProvider.CenteredOnScreen
+        )
     )
     CustomWindow(
         onCloseRequest = component::performCancel,
@@ -65,6 +70,9 @@ private fun PowerActionAlertWindow(
         resizable = false,
         onRequestMinimize = null,
         onRequestToggleMaximize = null,
+        windowController = rememberWindowController(
+            title = myStringResource(Res.string.shutdown_alert),
+        ),
     ) {
         PowerActionAlertPage(component)
     }
@@ -78,7 +86,6 @@ private fun PowerActionAlertPage(component: PowerActionComponent) {
     val cancel = component::performCancel
     val performPowerActionNow = component::performPowerAction
     val remainingSeconds = remainingTime / 1000
-    WindowTitle(myStringResource(Res.string.shutdown_alert))
     Column {
         Row(
             Modifier

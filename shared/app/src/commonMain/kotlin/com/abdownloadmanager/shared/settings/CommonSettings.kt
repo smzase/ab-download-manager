@@ -3,26 +3,34 @@ package com.abdownloadmanager.shared.settings
 import com.abdownloadmanager.resources.Res
 import com.abdownloadmanager.shared.pagemanager.PerHostSettingsPageManager
 import com.abdownloadmanager.shared.repository.BaseAppRepository
-import com.abdownloadmanager.shared.storage.BaseAppSettingsStorage
+import com.abdownloadmanager.shared.storage.appsettings.BaseAppSettingsStorage
+import com.abdownloadmanager.shared.storage.IDNSSettingsStorage
+import com.abdownloadmanager.shared.storage.SpeedLimitMode
+import com.abdownloadmanager.shared.storage.asLongStringSource
+import com.abdownloadmanager.shared.storage.asShortStringSource
 import com.abdownloadmanager.shared.ui.configurable.item.BooleanConfigurable
+import com.abdownloadmanager.shared.ui.configurable.item.DnsConfigurable
 import com.abdownloadmanager.shared.ui.configurable.item.EnumConfigurable
 import com.abdownloadmanager.shared.ui.configurable.item.FolderConfigurable
 import com.abdownloadmanager.shared.ui.configurable.item.IntConfigurable
 import com.abdownloadmanager.shared.ui.configurable.item.NavigatableConfigurable
 import com.abdownloadmanager.shared.ui.configurable.item.ProxyConfigurable
 import com.abdownloadmanager.shared.ui.configurable.item.SoundConfigurable
-import com.abdownloadmanager.shared.ui.configurable.item.SpeedLimitConfigurable
+import com.abdownloadmanager.shared.ui.configurable.item.SizeConfigurable
 import com.abdownloadmanager.shared.ui.configurable.item.StringConfigurable
 import com.abdownloadmanager.shared.ui.configurable.item.ThemeConfigurable
 import com.abdownloadmanager.shared.ui.theme.ThemeManager
 import com.abdownloadmanager.shared.util.ApiKeyUtil
 import com.abdownloadmanager.shared.util.MaximumDownloadRetriesLimitation
 import com.abdownloadmanager.shared.util.ThreadCountLimitation
+import com.abdownloadmanager.shared.util.convertPositiveSizeToHumanReadable
 import com.abdownloadmanager.shared.util.convertPositiveSpeedToHumanReadable
+import com.abdownloadmanager.shared.util.dns.DnsModes
 import com.abdownloadmanager.shared.util.notification.INotificationSound
 import com.abdownloadmanager.shared.util.proxy.ProxyManager
 import com.abdownloadmanager.shared.util.proxy.ProxyMode
 import com.abdownloadmanager.shared.util.ui.theme.DEFAULT_UI_SCALE
+import ir.amirab.downloader.DownloadSettings
 import ir.amirab.util.compose.StringSource
 import ir.amirab.util.compose.asStringSource
 import ir.amirab.util.compose.asStringSourceWithARgs
@@ -67,6 +75,7 @@ object CommonSettings {
             },
         )
     }
+
     fun maxConcurrentDownloads(appRepository: BaseAppRepository): IntConfigurable {
         return IntConfigurable(
             title = Res.string.settings_download_max_concurrent_downloads.asStringSource(),
@@ -117,6 +126,22 @@ object CommonSettings {
                 } else {
                     Res.string.disabled.asStringSource()
                 }
+            },
+        )
+    }
+
+    fun minPartSize(appRepository: BaseAppRepository): SizeConfigurable {
+        return SizeConfigurable(
+            title = Res.string.settings_min_part_size.asStringSource(),
+            description = Res.string.settings_min_part_size_description.asStringSource(),
+            backedBy = appRepository.minPartSize,
+            range = DownloadSettings.MIN_ALLOWED_MIN_PART_SIZE..DownloadSettings.MAX_ALLOWED_MIN_PART_SIZE,
+            isSpeed = false,
+            describe = {
+                convertPositiveSizeToHumanReadable(
+                    it,
+                    appRepository.sizeUnit.value
+                )
             },
         )
     }
@@ -257,7 +282,7 @@ object CommonSettings {
                 CommonSizeConvertConfigs.BinaryBytes,
                 CommonSizeConvertConfigs.DecimalBytes,
             ),
-            describe = {
+            itemTitle = {
                 val sizeUnit = SizeUnit(
                     SizeFactors.FactorValue.Kilo,
                     it.baseSize,
@@ -286,7 +311,7 @@ object CommonSettings {
                 CommonSizeConvertConfigs.BinaryBits,
                 CommonSizeConvertConfigs.DecimalBits,
             ),
-            describe = {
+            itemTitle = {
                 val sizeUnit = SizeUnit(
                     SizeFactors.FactorValue.Kilo,
                     it.baseSize,
@@ -330,20 +355,36 @@ object CommonSettings {
         )
     }
 
-    fun speedLimitConfig(appRepository: BaseAppRepository): SpeedLimitConfigurable {
-        return SpeedLimitConfigurable(
+    fun useSpeedLimitConfig(appRepository: BaseAppRepository): EnumConfigurable<SpeedLimitMode> {
+        return EnumConfigurable(
+            title = Res.string.settings_global_speed_limiter_enabled.asStringSource(),
+            description = Res.string.settings_global_speed_limiter_enabled_description.asStringSource(),
+            backedBy = appRepository.speedLimitMode,
+            possibleValues = SpeedLimitMode.entries,
+            itemTitle = {
+                it.asShortStringSource()
+            },
+            describe = {
+                it.asLongStringSource()
+            }
+        )
+    }
+
+    fun speedLimitConfig(appRepository: BaseAppRepository): SizeConfigurable {
+        return SizeConfigurable(
             title = Res.string.settings_global_speed_limiter.asStringSource(),
             description = Res.string.settings_global_speed_limiter_description.asStringSource(),
             backedBy = appRepository.speedLimiter,
+            enabled = appRepository.speedLimitMode.mapStateFlow {
+                it != SpeedLimitMode.Disabled
+            },
+            isSpeed = true,
+            range = 1..Long.MAX_VALUE,
             describe = {
-                if (it == 0L) {
-                    Res.string.unlimited.asStringSource()
-                } else {
-                    convertPositiveSpeedToHumanReadable(
-                        it,
-                        appRepository.speedUnit.value
-                    ).asStringSource()
-                }
+                convertPositiveSpeedToHumanReadable(
+                    it,
+                    appRepository.speedUnit.value
+                ).asStringSource()
             }
         )
     }
@@ -366,7 +407,7 @@ object CommonSettings {
             description = Res.string.settings_default_download_folder_description.asStringSource(),
             backedBy = appSettings.defaultDownloadFolder,
             validate = {
-                FileUtils.Companion.canWriteInThisFolder(it)
+                FileUtils.canWriteInThisFolder(it)
             },
             describe = {
                 Res.string
@@ -396,7 +437,7 @@ object CommonSettings {
                 2f,
             ),
             renderMode = EnumConfigurable.RenderMode.Spinner,
-            describe = {
+            itemTitle = {
                 val percent = (it * 100).roundToInt()
                 if (it == DEFAULT_UI_SCALE) {
                     StringSource.CombinedStringSource(
@@ -516,12 +557,12 @@ object CommonSettings {
                 }
             },
             possibleValues = listOf(null).plus(allLanguages),
-            describe = {
+            itemTitle = {
                 val isAuto = it == null
                 val language = it ?: languageManager.systemLanguageOrDefault
                 val languageName = language.nativeName
                 if (isAuto) {
-                    // always use english here!
+                    // always use English here!
                     "System ($languageName)".asStringSource()
                 } else {
                     languageName.asStringSource()
@@ -592,6 +633,7 @@ object CommonSettings {
             }
         )
     }
+
     fun generalNotificationSound(appSettings: BaseAppSettingsStorage): SoundConfigurable {
         return SoundConfigurable(
             title = Res.string.settings_notification_sound_general.asStringSource(),
@@ -739,6 +781,24 @@ object CommonSettings {
                                 )
                             )
                     }
+                }
+            }
+        )
+    }
+
+    fun dnsConfig(dnsStorage: IDNSSettingsStorage): DnsConfigurable {
+        return DnsConfigurable(
+            title = Res.string.settings_dns.asStringSource(),
+            description = Res.string.settings_dns_description.asStringSource(),
+            backedBy = dnsStorage.dnsSettingsFlow,
+            validate = {
+                true
+            },
+            describe = {
+                if (it.mode == DnsModes.System) {
+                    DnsModes.System.stringSource
+                } else {
+                    it.address.asStringSource()
                 }
             }
         )

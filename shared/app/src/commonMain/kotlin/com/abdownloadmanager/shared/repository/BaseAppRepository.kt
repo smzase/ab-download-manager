@@ -1,6 +1,8 @@
 package com.abdownloadmanager.shared.repository
 
-import com.abdownloadmanager.shared.storage.BaseAppSettingsStorage
+import com.abdownloadmanager.shared.IApplicationBackgroundTracker
+import com.abdownloadmanager.shared.storage.SpeedLimitMode.*
+import com.abdownloadmanager.shared.storage.appsettings.BaseAppSettingsStorage
 import com.abdownloadmanager.shared.storage.SupportedSizeUnits
 import com.abdownloadmanager.shared.util.AutoStartManager
 import com.abdownloadmanager.shared.util.SizeAndSpeedUnitProvider
@@ -8,6 +10,7 @@ import com.abdownloadmanager.shared.util.DownloadSystem
 import com.abdownloadmanager.shared.util.autoremove.RemovedDownloadsFromDiskTracker
 import com.abdownloadmanager.shared.util.category.CategoryManager
 import com.abdownloadmanager.shared.util.proxy.ProxyManager
+import com.abdownloadmanager.shared.util.systemusage.SystemUsageMonitor
 import ir.amirab.downloader.DownloadManager
 import ir.amirab.downloader.DownloadSettings
 import ir.amirab.downloader.monitor.IDownloadMonitor
@@ -15,9 +18,15 @@ import ir.amirab.util.datasize.ConvertSizeConfig
 import ir.amirab.util.flow.mapStateFlow
 import ir.amirab.util.flow.withPrevious
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.stateIn
 import kotlin.time.Duration.Companion.milliseconds
 
 open class BaseAppRepository(
@@ -28,6 +37,8 @@ open class BaseAppRepository(
     protected val downloadSettings: DownloadSettings,
     protected val removedDownloadsFromDiskTracker: RemovedDownloadsFromDiskTracker,
     protected val categoryManager: CategoryManager,
+    private val appUsageMonitor: SystemUsageMonitor,
+    private val backgroundTracker: IApplicationBackgroundTracker,
 ) : SizeAndSpeedUnitProvider {
     val theme = appSettings.theme
     val uiScale = appSettings.uiScale
@@ -35,8 +46,25 @@ open class BaseAppRepository(
     private val downloadMonitor: IDownloadMonitor = downloadSystem.downloadMonitor
 
     val maxConcurrentDownloads = appSettings.maxConcurrentDownloads
+    val speedLimitMode = appSettings.useSpeedLimit
     val speedLimiter = appSettings.speedLimit
+
+    private val shouldUseSpeedLimit = speedLimitMode.flatMapLatest { mode ->
+        when (mode) {
+            Enabled -> flowOf(true)
+            Disabled -> flowOf(false)
+            EnabledWhenBessy -> combine(
+                appUsageMonitor.isUserInteractingWithSystemFlow,
+                backgroundTracker.isInBackgroundFlow
+            ) { isUserInteracting, isInBackground ->
+                isUserInteracting && isInBackground
+            }
+        }
+    }.stateIn(scope, SharingStarted.Eagerly, false)
+    val isSpeedLimitApplied = MutableStateFlow(false)
+
     val threadCount = appSettings.threadCount
+    val minPartSize = appSettings.minPartSize
     val dynamicPartCreation = appSettings.dynamicPartCreation
     val useServerLastModifiedTime = appSettings.useServerLastModifiedTime
     val appendExtensionToIncompleteDownloads = appSettings.appendExtensionToIncompleteDownloads
@@ -103,9 +131,19 @@ open class BaseAppRepository(
             .onEach { enabled ->
                 AutoStartManager.startOnBoot(enabled)
             }.launchIn(scope)
-        speedLimiter
+        combine(
+            shouldUseSpeedLimit,
+            speedLimiter,
+        ) { useSpeedLimit, speedLimit ->
+            if (useSpeedLimit) {
+                speedLimit.coerceAtLeast(1)
+            } else {
+                0
+            }
+        }
             .debounce(500.milliseconds)
             .onEach {
+                isSpeedLimitApplied.value = it > 0L
                 downloadSettings.globalSpeedLimit = it
                 downloadManager.limitGlobalSpeed(it)
             }.launchIn(scope)
@@ -118,6 +156,12 @@ open class BaseAppRepository(
             .debounce(500.milliseconds)
             .onEach {
                 downloadSettings.defaultThreadCount = it
+                downloadManager.reloadSetting()
+            }.launchIn(scope)
+        minPartSize
+            .debounce(500.milliseconds)
+            .onEach {
+                downloadSettings.minPartSize = it
                 downloadManager.reloadSetting()
             }.launchIn(scope)
         dynamicPartCreation

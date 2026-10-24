@@ -1,7 +1,7 @@
 package com.abdownloadmanager.desktop.ui.error
 
 import com.abdownloadmanager.desktop.window.custom.CustomWindow
-import com.abdownloadmanager.desktop.window.custom.WindowTitle
+import com.abdownloadmanager.desktop.window.custom.rememberWindowController
 import com.abdownloadmanager.shared.util.ui.myColors
 import com.abdownloadmanager.shared.util.ui.theme.myTextSizes
 import com.abdownloadmanager.shared.util.ui.widget.ScreenSurface
@@ -16,12 +16,13 @@ import androidx.compose.foundation.verticalScroll
 import com.abdownloadmanager.shared.ui.widget.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.WindowPosition
-import androidx.compose.ui.window.rememberWindowState
+import androidx.compose.ui.window.v2.WindowBoundsProvider
+import androidx.compose.ui.window.v2.WindowPositionProvider
+import androidx.compose.ui.window.v2.WindowSizeProvider
+import androidx.compose.ui.window.v2.rememberWindowState
 
 @Composable
 fun ErrorWindow(
@@ -32,10 +33,15 @@ fun ErrorWindow(
         onCloseRequest = close,
         resizable = true,
         state = rememberWindowState(
-            size = DpSize(500.dp,400.dp),
-            position = WindowPosition.Aligned(Alignment.Center)
+            initialBoundsProvider = WindowBoundsProvider(
+                sizeProvider = WindowSizeProvider.Fixed(
+                    size = DpSize(500.dp, 400.dp)
+                ),
+                positionProvider = WindowPositionProvider.CenteredOnScreen
+            )
         ),
         alwaysOnTop = true,
+        windowController = rememberWindowController(title = "Error"),
     ) {
         ErrorUi(throwable, close)
     }
@@ -46,7 +52,6 @@ private fun ErrorUi(
     e: Throwable,
     close: () -> Unit,
 ) {
-    WindowTitle("Error")
     ScreenSurface(
         modifier = Modifier.fillMaxSize(),
         contentColor = myColors.onBackground,

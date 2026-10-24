@@ -10,7 +10,7 @@ import java.net.Proxy as JavaProxy
 import java.net.ProxySelector
 import java.net.URI
 
-/** A proxy configuration that can be passed to curl or a Chromium process. */
+/** A proxy configuration that can be passed to curl. */
 sealed interface ExternalProxy {
     data object Direct : ExternalProxy
     data object Unsupported : ExternalProxy

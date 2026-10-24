@@ -37,13 +37,17 @@ import ir.amirab.downloader.db.*
 import ir.amirab.downloader.monitor.DownloadMonitor
 import ir.amirab.downloader.utils.IDiskStat
 import com.abdownloadmanager.resources.ABDMLanguageResources
+import com.abdownloadmanager.shared.IApplicationBackgroundTracker
 import com.abdownloadmanager.shared.downloaderinui.DownloaderInUiRegistry
 import com.abdownloadmanager.shared.downloaderinui.hls.HLSDownloaderInUi
 import com.abdownloadmanager.shared.downloaderinui.http.HttpDownloaderInUi
+import com.abdownloadmanager.shared.platformApplicationBackgroundTracker
 import com.abdownloadmanager.shared.repository.BaseAppRepository
-import com.abdownloadmanager.shared.storage.BaseAppSettingsStorage
+import com.abdownloadmanager.shared.storage.appsettings.BaseAppSettingsStorage
+import com.abdownloadmanager.shared.storage.DnsSettings
 import com.abdownloadmanager.shared.storage.ExtraDownloadSettingsStorage
 import com.abdownloadmanager.shared.storage.ExtraQueueSettingsStorage
+import com.abdownloadmanager.shared.storage.IDNSSettingsStorage
 import com.abdownloadmanager.shared.storage.IExtraDownloadSettingsStorage
 import com.abdownloadmanager.shared.storage.IExtraQueueSettingsStorage
 import com.abdownloadmanager.shared.storage.ILastSavedLocationsStorage
@@ -51,6 +55,8 @@ import com.abdownloadmanager.shared.storage.ISelectQueueStorage
 import com.abdownloadmanager.shared.storage.PerHostSettingsDatastoreStorage
 import com.abdownloadmanager.shared.storage.ProxyDatastoreStorage
 import com.abdownloadmanager.shared.storage.SelectQueueSettings
+import com.abdownloadmanager.shared.storage.appsettings.PlatformAppSettingsSchema
+import com.abdownloadmanager.shared.storage.impl.DNSStorage
 import com.abdownloadmanager.shared.storage.impl.LastSavedLocationStorage
 import com.abdownloadmanager.shared.storage.impl.SelectQueueStorage
 import com.abdownloadmanager.shared.ui.theme.ThemeSettingsStorage
@@ -65,7 +71,6 @@ import com.abdownloadmanager.shared.util.UserAgentProviderFromSettings
 import com.abdownloadmanager.shared.util.*
 import com.abdownloadmanager.updateapplier.UpdateApplier
 import ir.amirab.downloader.DownloadManager
-import ir.amirab.util.config.datastore.createMapConfigDatastore
 import kotlinx.coroutines.*
 import kotlinx.serialization.json.Json
 import okhttp3.Dispatcher
@@ -80,6 +85,9 @@ import ir.amirab.util.AppVersionTracker
 import com.abdownloadmanager.shared.util.appinfo.PreviousVersion
 import com.abdownloadmanager.shared.util.autoremove.RemovedDownloadsFromDiskTracker
 import com.abdownloadmanager.shared.util.category.*
+import com.abdownloadmanager.shared.util.di.BaseOKHttpClientQualifier
+import com.abdownloadmanager.shared.util.dns.AppDns
+import com.abdownloadmanager.shared.util.dns.DnsOptionProvider
 import com.abdownloadmanager.shared.util.downloaderror.DownloadErrorMapperRegistryFactory
 import com.abdownloadmanager.shared.util.downloaderror.faileddownloads.FailedDownloadErrorStorageInMemory
 import com.abdownloadmanager.shared.util.downloaderror.faileddownloads.FailedDownloads
@@ -100,6 +108,8 @@ import com.abdownloadmanager.shared.util.ui.IMyIcons
 import com.abdownloadmanager.shared.util.proxy.IProxyStorage
 import com.abdownloadmanager.shared.util.proxy.ProxyData
 import com.abdownloadmanager.shared.util.proxy.ProxyManager
+import com.abdownloadmanager.shared.util.systemusage.SystemUsageMonitor
+import com.abdownloadmanager.shared.util.systemusage.platformSystemUsageMonitor
 import ir.amirab.downloader.DownloaderRegistry
 import ir.amirab.downloader.connection.UserAgentProvider
 import ir.amirab.downloader.connection.proxy.AutoConfigurableProxyProvider
@@ -121,6 +131,7 @@ import ir.amirab.util.compose.IIconResolver
 import ir.amirab.util.compose.localizationmanager.LanguageManager
 import ir.amirab.util.compose.localizationmanager.LanguageSourceProvider
 import ir.amirab.util.compose.localizationmanager.LanguageStorage
+import ir.amirab.util.config.datastore.createSchemaBasedDatastore
 import ir.amirab.util.config.datastore.kotlinxSerializationDataStore
 import ir.amirab.util.startup.AbstractStartupManager
 import ir.amirab.util.startup.Startup
@@ -466,6 +477,8 @@ fun getAppModule(context: ABDMApp) = module {
             get(),
             get(),
             get(),
+            get(),
+            get(),
         )
     }.apply {
         bind<BaseAppRepository>()
@@ -505,9 +518,10 @@ fun getAppModule(context: ABDMApp) = module {
     single {
         val definedPaths = get<DefinedPaths>()
         AppSettingsStorage(
-            createMapConfigDatastore(
+            createSchemaBasedDatastore(
                 definedPaths.appSettingsFile.toFile(),
                 get(),
+                PlatformAppSettingsSchema,
             )
         )
     }.apply {
@@ -551,12 +565,24 @@ fun getAppModule(context: ABDMApp) = module {
             ignoreHostNameVerification = appSettingsStorage.ignoreSSLCertificates
         )
     }
-    single<OkHttpClient> {
+    single {
+        val definedPaths = get<DefinedPaths>()
+        DNSStorage(
+            kotlinxSerializationDataStore(
+                definedPaths.dnsSettingsFile.toFile(),
+                get(),
+                ::DnsSettings
+            )
+        )
+    }.apply {
+        bind<IDNSSettingsStorage>()
+        bind<DnsOptionProvider>()
+    }
+    single<OkHttpClient>(BaseOKHttpClientQualifier) {
         val appSSLFactoryProvider: AppSSLFactoryProvider = get()
         val appHostNameVerifier: AppHostNameVerifier = get()
         OkHttpClient
             .Builder()
-            .protocols(listOf(Protocol.HTTP_1_1))
             .dispatcher(Dispatcher().apply {
                 //bypass limit on concurrent connections!
                 maxRequests = Int.MAX_VALUE
@@ -567,6 +593,17 @@ fun getAppModule(context: ABDMApp) = module {
                 appSSLFactoryProvider.trustManager,
             )
             .hostnameVerifier(appHostNameVerifier)
+            .build()
+    }
+    single<AppDns> {
+        AppDns(get<OkHttpClient>(BaseOKHttpClientQualifier), get())
+    }
+    single<OkHttpClient> {
+        val baseClient = get<OkHttpClient>(BaseOKHttpClientQualifier)
+        val appDns: AppDns = get()
+        baseClient.newBuilder()
+            .protocols(listOf(Protocol.HTTP_1_1))
+            .dns(appDns)
             .build()
     }
     single<ILastSavedLocationsStorage> {
@@ -595,6 +632,12 @@ fun getAppModule(context: ABDMApp) = module {
             get(),
             get(),
         )
+    }
+    single<SystemUsageMonitor> {
+        platformSystemUsageMonitor()
+    }
+    single<IApplicationBackgroundTracker> {
+        platformApplicationBackgroundTracker()
     }
     single<IPerHostSettingsStorage> {
         val definedPaths = get<DefinedPaths>()

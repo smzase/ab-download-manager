@@ -16,6 +16,12 @@ object HttpUrlUtils {
         return runCatching {
             createURL(link)
         }.map { url ->
+            // An explicit filename takes precedence over a gateway's path or metadata.
+            url.queryParameterIgnoreCase("filename")
+                ?.takeIf { it.isNotBlank() }
+                ?.let(::decodeFileName)
+                ?.let { return@map it }
+
             url.extractResponseContentDispositionFileName()?.let {
                 return@map it
             }
@@ -44,8 +50,8 @@ object HttpUrlUtils {
 
             url.pathSegments
                 .lastOrNull { it.isNotBlank() }
-                ?.takeIf { it != "/" }
                 ?.let(::decodeFileName)
+                ?: url.host.replace('.', '_')
         }.getOrNull()
     }
 
@@ -84,5 +90,5 @@ object HttpUrlUtils {
 
     private const val CONTENT_DISPOSITION_QUERY = "response-content-disposition"
 
-    private val fileNameQueryParams = listOf("file", "filename", "name", "download", "f")
+    private val fileNameQueryParams = listOf("file", "name", "download", "f")
 }

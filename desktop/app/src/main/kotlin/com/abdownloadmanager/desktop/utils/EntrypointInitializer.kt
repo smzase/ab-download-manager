@@ -1,6 +1,10 @@
 package com.abdownloadmanager.desktop.utils
 
 import com.abdownloadmanager.desktop.AppArguments
+import com.abdownloadmanager.desktop.NativeExtractor
+import com.abdownloadmanager.shared.util.schemakt.initializeForABDM
+import io.github.amir1376.schemakt.Schema
+import io.github.vinceglb.filekit.FileKit
 import ir.amirab.util.guardedEntry
 import ir.amirab.util.logger.AppLogger
 
@@ -23,6 +27,18 @@ object EntrypointInitializer {
                 )
             }
             AppProperties.boot(AppInfo.definedPaths.appPropertiesFile)
+
+            // FileKit is currently only used for file and directory pickers.
+            // Its initialization has no effect, but we keep it here for future-proofing.
+            FileKit.init(
+                appId = AppInfo.packageName,
+                filesDir = AppInfo.definedPaths.configDir.toFile(),
+                cacheDir = AppInfo.definedPaths.systemDir.toFile(),
+            )
+            NativeExtractor.init(
+                cacheDir = AppInfo.definedPaths.nativeCacheDir
+            )
+
             AppLogger.init(
                 writeToConsole = false,
                 logFilePath = AppInfo.definedPaths.logDir
@@ -36,6 +52,7 @@ object EntrypointInitializer {
                         AppInfo.isInDebugMode()
                     },
             )
+            Schema.initializeForABDM()
         }
     }
 }

@@ -2,6 +2,7 @@ package com.abdownloadmanager.android.ui.configurable.comon
 
 import com.abdownloadmanager.android.ui.configurable.comon.renderer.BooleanConfigurableRenderer
 import com.abdownloadmanager.android.ui.configurable.comon.renderer.DayOfWeekConfigurableRenderer
+import com.abdownloadmanager.android.ui.configurable.comon.renderer.DnsConfigurableRenderer
 import com.abdownloadmanager.android.ui.configurable.comon.renderer.EnumConfigurableRenderer
 import com.abdownloadmanager.android.ui.configurable.comon.renderer.FileChecksumConfigurableRenderer
 import com.abdownloadmanager.android.ui.configurable.comon.renderer.FloatConfigurableRenderer
@@ -11,7 +12,8 @@ import com.abdownloadmanager.android.ui.configurable.comon.renderer.LongConfigur
 import com.abdownloadmanager.android.ui.configurable.comon.renderer.NavigatableConfigurableRenderer
 import com.abdownloadmanager.android.ui.configurable.comon.renderer.ProxyConfigurableRenderer
 import com.abdownloadmanager.android.ui.configurable.comon.renderer.SoundConfigurableRenderer
-import com.abdownloadmanager.android.ui.configurable.comon.renderer.SpeedLimitConfigurableRenderer
+import com.abdownloadmanager.android.ui.configurable.comon.renderer.SizeConfigurableRenderer
+import com.abdownloadmanager.android.ui.configurable.comon.renderer.ToggleableSpeedLimitConfigurableRenderer
 import com.abdownloadmanager.android.ui.configurable.comon.renderer.StringConfigurableRenderer
 import com.abdownloadmanager.android.ui.configurable.comon.renderer.ThemeConfigurableRenderer
 import com.abdownloadmanager.android.ui.configurable.comon.renderer.TimeConfigurableRenderer
@@ -27,10 +29,12 @@ val CommonConfigurableRenderersForAndroid = CommonConfigurableRenderers(
     longConfigurableRenderer = LongConfigurableRenderer,
     perHostSettingsConfigurableRenderer = NavigatableConfigurableRenderer,
     enumConfigurableRenderer = EnumConfigurableRenderer,
-    speedConfigurableRenderer = SpeedLimitConfigurableRenderer,
+    sizeConfigurableRenderer = SizeConfigurableRenderer,
+    toggleableSpeedLimitConfigurableRenderer = ToggleableSpeedLimitConfigurableRenderer,
     stringConfigurableRenderer = StringConfigurableRenderer,
     themeConfigurableRenderer = ThemeConfigurableRenderer,
     timeConfigurableRenderer = TimeConfigurableRenderer,
     proxyConfigurableRenderer = ProxyConfigurableRenderer,
+    dnsConfigurableRenderer = DnsConfigurableRenderer,
     soundConfigurableRenderer = SoundConfigurableRenderer,
 )

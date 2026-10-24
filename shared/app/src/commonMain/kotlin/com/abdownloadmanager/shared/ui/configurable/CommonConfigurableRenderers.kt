@@ -16,11 +16,13 @@ data class CommonConfigurableRenderers(
     val longConfigurableRenderer: ConfigurableRenderer<LongConfigurable>,
     val perHostSettingsConfigurableRenderer: ConfigurableRenderer<NavigatableConfigurable>,
     val enumConfigurableRenderer: ConfigurableRenderer<EnumConfigurable<Any>>,
-    val speedConfigurableRenderer: ConfigurableRenderer<SpeedLimitConfigurable>,
+    val sizeConfigurableRenderer: ConfigurableRenderer<SizeConfigurable>,
+    val toggleableSpeedLimitConfigurableRenderer: ConfigurableRenderer<ToggleableSpeedLimitConfigurable>,
     val stringConfigurableRenderer: ConfigurableRenderer<StringConfigurable>,
     val themeConfigurableRenderer: ConfigurableRenderer<ThemeConfigurable>,
     val timeConfigurableRenderer: ConfigurableRenderer<TimeConfigurable>,
     val proxyConfigurableRenderer: ConfigurableRenderer<ProxyConfigurable>,
+    val dnsConfigurableRenderer: ConfigurableRenderer<DnsConfigurable>,
     val soundConfigurableRenderer: ConfigurableRenderer<SoundConfigurable>,
 ) : ContainsConfigurableRenderers {
     override fun getAllRenderers(): Map<Configurable.Key, ConfigurableRenderer<*>> {
@@ -34,11 +36,13 @@ data class CommonConfigurableRenderers(
             LongConfigurable.Key to longConfigurableRenderer,
             NavigatableConfigurable.Key to perHostSettingsConfigurableRenderer,
             EnumConfigurable.Key to enumConfigurableRenderer,
-            SpeedLimitConfigurable.Key to speedConfigurableRenderer,
+            SizeConfigurable.Key to sizeConfigurableRenderer,
+            ToggleableSpeedLimitConfigurable.Key to toggleableSpeedLimitConfigurableRenderer,
             StringConfigurable.Key to stringConfigurableRenderer,
             ThemeConfigurable.Key to themeConfigurableRenderer,
             TimeConfigurable.Key to timeConfigurableRenderer,
             ProxyConfigurable.Key to proxyConfigurableRenderer,
+            DnsConfigurable.Key to dnsConfigurableRenderer,
             SoundConfigurable.Key to soundConfigurableRenderer,
         )
     }

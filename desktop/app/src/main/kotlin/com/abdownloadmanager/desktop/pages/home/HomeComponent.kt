@@ -251,15 +251,8 @@ class HomeComponent(
     }
 
     val tableState = TableState(
-        cells = listOf(
-            DownloadListCells.Check,
-            DownloadListCells.Name,
-            DownloadListCells.Size,
-            DownloadListCells.Status,
-            DownloadListCells.Speed,
-            DownloadListCells.TimeLeft,
-            DownloadListCells.DateAdded,
-        ),
+        cells = DownloadListCells.allCells,
+        initialVisibleItems = DownloadListCells.initiallyVisibleCells,
         forceVisibleCells = listOf(
             DownloadListCells.Name,
         ),
@@ -396,6 +389,7 @@ class HomeComponent(
         queueManager = queueManager,
         categoryManager = categoryManager,
         openFile = this::openFile,
+        openWith = this::openWith,
         openFolder = this::openFolder,
         requestDelete = this::requestDelete,
     )

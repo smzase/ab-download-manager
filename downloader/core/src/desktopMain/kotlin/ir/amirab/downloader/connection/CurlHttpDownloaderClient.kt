@@ -1,6 +1,5 @@
 package ir.amirab.downloader.connection
 
-import ir.amirab.downloader.connection.clearance.ClearanceProvider
 import ir.amirab.downloader.connection.proxy.ProxyType
 import ir.amirab.downloader.connection.response.HttpResponseInfo
 import ir.amirab.downloader.downloaditem.http.IHttpBasedDownloadCredentials
@@ -75,7 +74,6 @@ class CloudflareFallbackHttpDownloaderClient(
 class CurlHttpDownloaderClient(
     private val customUserAgentProvider: UserAgentProvider,
     private val proxyResolver: ExternalProxyResolver,
-    private val clearanceProvider: ClearanceProvider = ClearanceProvider.NoOp(),
     private val executable: String = defaultCurlExecutable(),
 ) : HttpDownloaderClient() {
     override suspend fun actualHead(
@@ -154,8 +152,6 @@ class CurlHttpDownloaderClient(
         start: Long?,
         end: Long?,
     ): LinkedHashMap<String, String> {
-        val clearance = clearanceProvider.getClearanceFor(credentials.link)
-            ?.takeUnless { it.isExpired() }
         val explicitReferer = credentials.headers
             ?.entries
             ?.firstOrNull { it.key.equals("Referer", ignoreCase = true) }
@@ -168,8 +164,7 @@ class CurlHttpDownloaderClient(
                 ?.entries
                 ?.firstOrNull { it.key.equals("User-Agent", ignoreCase = true) }
                 ?.value
-        val effectiveUserAgent = clearance?.userAgent
-            ?: credentialsUserAgent
+        val effectiveUserAgent = credentialsUserAgent
             ?: customUserAgentProvider.getUserAgent()
             ?: getDefaultUserAgent()
 
@@ -179,9 +174,6 @@ class CurlHttpDownloaderClient(
             credentials.headers
                 ?.filterNot { it.key.equals("Host", ignoreCase = true) }
                 ?.forEach { (key, value) -> putHeader(key, value) }
-            clearance?.let {
-                putHeader("Cookie", mergeCookies(credentials.headers, it.cookie))
-            }
             if (explicitReferer == null) {
                 effectiveReferer?.let { putHeader("Referer", it) }
             }

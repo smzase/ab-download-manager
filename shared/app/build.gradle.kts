@@ -11,6 +11,7 @@ plugins {
     id(Plugins.Kotlin.serialization)
     id(Plugins.Android.multiplatformLibrary)
     id(Plugins.buildConfig)
+    id(Plugins.ksp)
 }
 kotlin {
     jvm("desktop")
@@ -44,27 +45,38 @@ kotlin {
 
             api(libs.androidx.datastore)
 
+            implementation(libs.okhttp.dnsoverhttps)
+
             implementation(libs.kotlinFileWatcher)
 
             //because we don't have material design, but we use ripple effect
             implementation(libs.compose.material.rippleEffect)
+
+            api(libs.schemakt)
 
             // multiplatform scrollbars
             api(libs.fastscroller.core)
             api(libs.markdownRenderer.core)
             api(libs.compose.reorderable)
         }
-        androidMain.dependencies {
-            api(libs.androidx.core.ktx)
-            api(libs.androidx.activity.compose)
-        }
-        val desktopMain by getting
-        desktopMain.dependencies {
-            implementation(libs.osThemeDetector.get().toString()) {
-                exclude(group = "net.java.dev.jna")
+        androidMain {
+            dependencies {
+                api(libs.androidx.core.ktx)
+                api(libs.androidx.activity.compose)
             }
         }
+        val androidMain = getByName("androidMain")
+        val desktopMain = getByName("desktopMain")
+        desktopMain.dependencies {
+            implementation(libs.nucleus.darkmodeDetector)
+        }
     }
+}
+
+
+dependencies {
+    add("kspAndroid", libs.arrow.opticKsp)
+    add("kspDesktop", libs.arrow.opticKsp)
 }
 
 // generate a file with these constants
@@ -107,7 +119,7 @@ buildConfig {
     buildConfigField(
         "DONATE_LINK",
         provider {
-            "https://github.com/amir1376/ab-download-manager/blob/master/DONATE.md"
+            "https://abdownloadmanager.com/donate"
         }
     )
     buildConfigField(

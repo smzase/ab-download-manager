@@ -5,6 +5,8 @@ import buildlogic.versioning.getAppVersion
 import buildlogic.versioning.getAppVersionString
 import buildlogic.versioning.getApplicationPackageName
 import com.android.build.api.artifact.SingleArtifact
+import com.mikepenz.aboutlibraries.plugin.DuplicateMode
+import com.mikepenz.aboutlibraries.plugin.DuplicateRule
 import ir.amirab.installer.InstallerTargetFormat
 import ir.amirab.plugin.common_android.task.SignApkTask
 import ir.amirab.plugin.common_android.task.androidEnableFileTypesGeneratorForManifest
@@ -52,6 +54,17 @@ dependencies {
     implementation(libs.aboutLibraries.core)
     implementation(project(":shared:app"))
     ksp(libs.arrow.opticKsp)
+}
+
+aboutLibraries {
+    export {
+        prettyPrint = true
+    }
+    library {
+        mergePlatformArtifacts = true
+        duplicationMode = DuplicateMode.MERGE
+        duplicationRule = DuplicateRule.SIMPLE
+    }
 }
 
 androidEnableFileTypesGeneratorForManifest(

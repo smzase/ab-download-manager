@@ -37,6 +37,7 @@ import ir.amirab.downloader.queue.queueModelsFlow
 import ir.amirab.util.compose.asStringSource
 import ir.amirab.util.coroutines.combine
 import ir.amirab.util.flow.combineStateFlows
+import ir.amirab.util.flow.mapStateFlow
 import ir.amirab.util.osfileutil.FileUtils
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -268,7 +269,7 @@ abstract class BaseHomeComponent(
             .distinctBy { it.id }
     }
         .withResumedLifecycle()
-        .stateIn(scope, SharingStarted.Companion.Eagerly, emptyList())
+        .stateIn(scope, SharingStarted.Eagerly, emptyList())
 
 
     init {
@@ -302,6 +303,13 @@ abstract class BaseHomeComponent(
         }
     }
 
+    val selectionContentSize = selectionListItems.mapStateFlow { items ->
+        items.sumOf {
+            // consider -1 as 0
+            it.contentLength.coerceAtLeast(0)
+        }
+    }
+
     fun openFileOrShowProperties(id: Long) {
         scope.launch {
             val dItem = downloadSystem.getDownloadItemById(id) ?: return@launch
@@ -326,6 +334,22 @@ abstract class BaseHomeComponent(
                 return@launch
             }
             downloadItemOpener.openDownloadItem(dItem)
+        }
+    }
+
+    fun openWith(id: Long) {
+        scope.launch {
+            val dItem = downloadSystem.getDownloadItemById(id) ?: return@launch
+            if (dItem.status != DownloadStatus.Completed) {
+                notificationSender.sendNotification(
+                    Res.string.open_with,
+                    Res.string.cant_open_file.asStringSource(),
+                    Res.string.not_finished.asStringSource(),
+                    NotificationType.Error,
+                )
+                return@launch
+            }
+            downloadItemOpener.openDownloadItemWith(dItem)
         }
     }
 
@@ -376,7 +400,7 @@ abstract class BaseHomeComponent(
             openFolder = {
                 runCatching {
                     it.getDownloadPath()?.let {
-                        FileUtils.Companion.openFolder(File(it))
+                        FileUtils.openFolder(File(it))
                     }
                 }
             },
@@ -407,6 +431,7 @@ abstract class BaseHomeComponent(
     fun requestEnterNewURL() {
         enterNewURLDialogManager.openEnterNewURLWindow()
     }
+
     sealed interface Effects {
         interface PlatformEffects : Effects
 

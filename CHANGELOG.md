@@ -14,6 +14,84 @@
 
 ### Security
 
+## 1.11.1
+
+### Fixed
+
+- Directory picker crash on Linux (#1479)
+- Idle detection not working properly on Linux (#1479)
+
+### Improved
+
+- Updated translations
+- Minor improvements to the desktop settings UI
+
+## 1.11.0
+
+### Added
+
+- Show the selected item count and total content size in the desktop download list (#1445)
+- Add start and finish dates to the desktop download list (#1447)
+- Add an **Open With** option to the download menu and Download Complete dialog (long-press the **Open** button) (#1465)
+- Add an option to limit download speed while using other apps (#1466)
+- Add an option to configure the minimum download part size (#1467)
+- Add a speed limiter toggle to the system tray (#1458)
+
+### Fixed
+
+- Fix launching the app through browser integration on macOS (#1434)
+- Set window titles when creating windows (#1432)
+- Fix flickering when the NSIS installer closes the app on Windows (#1471)
+
+### Improved
+
+- Update translations
+- UI/UX improvements
+
+## 1.10.4
+
+### Fixed
+
+- Fixed an issue where some settings, including UI Scale, were not saved properly (#1409)
+
+### Improved
+
+- Updated translations
+
+## 1.10.3
+
+### Added
+
+- Added an option to use the newly entered path on the Add Download page as the default download location (#1406)
+
+### Fixed
+
+- Restricted the integration server to local connections only (#1442)
+
+### Improved
+
+- Updated translations
+- Improved system tray icon sizing on Windows
+- Improved filename detection when extracting filenames from links (#1393)
+
+## 1.10.2
+
+### Added
+
+- Added built-in DNS-over-HTTPS (DoH) support (#1380)
+- Added native messaging manifests for additional browsers (#1366)
+- Added more browser integration installation links
+- Added "Import From Clipboard" to the system tray menu
+
+### Fixed
+
+- Fixed a `Win32Exception` that could occur when uninstalling native messaging from the CLI (#1345)
+
+### Updated
+
+- Updated translations
+- Updated the donation link
+
 ## 1.10.1
 
 ### Changed
